@@ -91,10 +91,10 @@ class LLMZeroShotClassifier(nn.Module):
     ):
         super().__init__()
         config = Config.from_sources(yaml_file=model_config_path)
-        salmon = NatureLM.from_config(config.model).to("cuda:0").eval()
-        tokenizer = salmon.llama_tokenizer
+        naturelm = NatureLM.from_config(config.model).to("cuda:0").eval()
+        tokenizer = naturelm.llama_tokenizer
         self.allm = BioALLM(
-            salmon,
+            naturelm,
             tokenizer,
             config,
             multi_label=multi_label,

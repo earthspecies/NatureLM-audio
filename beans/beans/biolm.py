@@ -16,7 +16,7 @@ END_TOKEN = "<|end_of_text|>"  # TODO: don't hardcode me
 class BioALLM:
     def __init__(
         self,
-        salmon: NatureLM,
+        model: NatureLM,
         tokenizer,
         config,
         labels,
@@ -25,7 +25,7 @@ class BioALLM:
         match_to_labels=True,
         loss_ranking=False,
     ) -> None:
-        self.salmon = salmon
+        self.model = model
         self.tokenizer = tokenizer
         self.config = config
         self.labels = labels
@@ -104,7 +104,7 @@ class BioALLM:
             for label in labels:
                 samples_for_label = prepare_samples_for_detection(samples, prompts[0], label)
                 with torch.no_grad():
-                    loss_for_label = self.salmon.forward(samples_for_label)["per_example_loss"]
+                    loss_for_label = self.model.forward(samples_for_label)["per_example_loss"]
                 for loss_ranking, example_loss in zip(loss_rankings, loss_for_label):
                     loss_ranking[label] = example_loss.item()  # Convert tensor to scalar
 
@@ -119,7 +119,7 @@ class BioALLM:
                 return predictions  # Early return since we've processed the predictions
 
         with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=False):
-            texts = self.salmon.generate(samples, self.config.generate, prompts)
+            texts = self.model.generate(samples, self.config.generate, prompts)
 
         if not self.match_to_labels:  # Return raw outputs
             return texts
