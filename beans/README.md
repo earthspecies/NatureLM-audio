@@ -8,19 +8,6 @@ This repository contains the code for downloading the datasets and running the b
 
 ## Installation
 
-1. Create a conda environment
-
-```
-conda create -n beans python=3.8 pytorch cudatoolkit=11.3 torchvision torchaudio cudnn -c pytorch -c conda-forge
-```
-
-2. Install the dependencies and the benchmark itself
-
-```
-pip install -r requirements.txt
-pip install -e .
-```
-
 BEANS uses SoX for pre-processing some datasets. For Ubuntu/Debian you can install it via:
 
 ```
@@ -28,9 +15,9 @@ sudo apt-get install sox
 sudo apt-get install libsox-fmt-mp3
 ```
 
-3. The benchmark also relies on a few Kaggle datasets. Install the Kaggle CLI via `pip install kaggle` and make sure to put your API token in `~/.kaggle/kaggle.json`. You will also need to go to the individual competition pages (namely, [cbi](https://www.kaggle.com/c/birdsong-recognition) and [rcfx](https://www.kaggle.com/c/rfcx-species-audio-detection)) and choose "late submission" in order to download their datasets.
+1. The benchmark also relies on a few Kaggle datasets. Make sure to put your API token in `~/.kaggle/kaggle.json`. You will also need to go to the individual competition pages (namely, [cbi](https://www.kaggle.com/c/birdsong-recognition) and [rcfx](https://www.kaggle.com/c/rfcx-species-audio-detection)) and choose "late submission" in order to download their datasets.
 
-4. Download the dataset by running the following script. It also runs a Python script which verifies the MD5 hashes of all the data files. Note that you'll need about 300GB of disk space for storing the original and the processed datasets.
+2. Download the dataset by running the following script. It also runs a Python script which verifies the MD5 hashes of all the data files. Note that you'll need about 300GB of disk space for storing the original and the processed datasets.
 
 ```
 scripts/download_data.sh
@@ -43,7 +30,7 @@ If the data download and validation finish successfully, you'll see a `Validatio
 You can run all the baseline models by running:
 
 ```
-python run_benchmark.py
+uv run beans
 ```
 
 This will write result files into the `logs` directory.
