@@ -3,6 +3,7 @@ from pathlib import Path
 import click
 import torch
 
+# from beans.run_inference import run_inference as benchmark_fn
 from inference_web_app import main as app_fn
 from train import main as train_fn
 
@@ -19,18 +20,23 @@ def common_options(f):
     return f
 
 
-@click.group()
-def cli():
+@click.command()
+def beans():
     pass
 
 
-@cli.command()
+@click.group()
+def naturelm():
+    pass
+
+
+@naturelm.command()
 @common_options
 def train(cfg_path, options):
     train_fn(cfg_path=cfg_path, options=options)
 
 
-@cli.command()
+@naturelm.command()
 @common_options
 @click.option("--device", default="cuda" if torch.cuda.is_available() else "cpu", type=str)
 @click.option("--port", default=5001, type=int)
@@ -48,4 +54,4 @@ def inference_app(cfg_path, options, device, port, assets_dir, show_errors):
 
 
 if __name__ == "__main__":
-    cli()
+    naturelm()

@@ -7,9 +7,10 @@ import yaml
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from beans.generative_evaluation import evaluate
-from beans.models import LLMZeroShotClassifier
 from NatureLM.dataset import NatureLMDataset
+
+from .beans.generative_evaluation import evaluate
+from .beans.models import LLMZeroShotClassifier
 
 BASE_ANNOTATION_PATH = "/home/davidrobinson/foundation-model-data/"
 BASE_DATA_PATH = "/home/davidrobinson/foundation-model-data/audio"

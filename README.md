@@ -21,6 +21,8 @@ Project entrypoints are then available with
 uv run naturelm-audio
 ```
 
+### beans
+
 > [!NOTE]
 > When installing PyTorch through conda, it automatically manages CUDA toolkit. This is different from uv/pip installations where you often need to manually install CUDA toolkit. Please refer to [this guide](https://www.notion.so/earthspecies/Running-natureLM-on-llambdalabs-14decbb680d080daa4acc799ad1270c4?pvs=4#14decbb680d080f39d1bfac27156978d) on Notion for setting up CUDA toolkit.
 
