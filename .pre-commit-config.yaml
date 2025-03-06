@@ -1,0 +1,20 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.3.0
+  hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+- repo: https://github.com/astral-sh/uv-pre-commit
+  rev: 0.5.5
+  hooks:
+    - id: uv-lock
+    - id: uv-export
+      args: ["--frozen", "--output-file=requirements.txt", "--no-hashes"]
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.8.2
+  hooks:
+    # Run the linter.
+    - id: ruff
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format

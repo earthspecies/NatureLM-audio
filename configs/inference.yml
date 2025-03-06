@@ -1,0 +1,37 @@
+model:
+  llama_path: "meta-llama/Meta-Llama-3.1-8B-Instruct"
+  beats_path: "gs://foundation-models/beats_ckpts/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt"
+  ckpt: "gs://foundation-models/iclr/s2_e160.pt"
+
+  freeze_beats: True
+  freeze_llama: True
+
+  use_audio_Qformer: True
+  max_pooling: False
+  downsample_factor: 8
+  freeze_audio_QFormer: False
+  window_level_Qformer: True
+  num_audio_query_token: 1
+  second_per_window: 0.333333
+  second_stride: 0.333333
+
+  audio_llama_proj_model: ""
+  freeze_audio_llama_proj: False
+
+  lora: True
+  lora_rank: 32
+  lora_alpha: 32
+  lora_dropout: 0.1
+
+  prompt_template: "<|start_header_id|>user<|end_header_id|>\n\n{}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+  max_txt_len: 160
+  end_sym: <|end_of_text|>
+
+generate:
+  max_new_tokens: 300
+  num_beams: 2
+  do_sample: False
+  min_length: 1
+  temperature: 0.1
+  repetition_penalty: 1.0
+  length_penalty: 1.0
