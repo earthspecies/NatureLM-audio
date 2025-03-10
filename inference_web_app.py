@@ -311,7 +311,7 @@ def main(
         ],
     }
 
-    with gr.Blocks(theme=gr.themes.Default(primary_hue="slate")) as app:
+    with gr.Blocks(title="NatureLM-audio", theme=gr.themes.Default(primary_hue="slate")) as app:
         with gr.Tabs():
             with gr.Tab("Chat"):
                 _chat_tab(examples)
