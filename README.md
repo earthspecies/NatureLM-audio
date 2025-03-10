@@ -26,3 +26,7 @@ from NatureLM.models import NatureLM
 
 model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio")
 ```
+
+## Citation
+
+TODO
