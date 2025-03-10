@@ -70,8 +70,6 @@ class RunConfig(BaseModel, extra="forbid", validate_assignment=True):
     device: Literal["cuda", "cpu"] = "cuda"
     use_distributed: bool = False
 
-    # TODO (milad) world_size, rank, and gpu are set by init_distributed_mode(). They're
-    # more like runtime values than config values. Should we keep them here?
     world_size: int = 1
     rank: int = 0
     gpu: int | None = None
@@ -141,12 +139,9 @@ class GenerateConfig(BaseModel, extra="forbid", validate_assignment=True):
     repetition_penalty: float
     length_penalty: float
 
-    # TODO (milad): I have seen referenes to top_p config in the code but it's commented
-    # out. Do we want to expose that here?
-
 
 class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
-    llama_path: Path  # TODO: this is the default in the init() but does it make sense?
+    llama_path: Path
     beats_path: Path | GSPath | None = None
     beats_cfg: BeatsConfig
     ckpt: Path | GSPath | None = None
@@ -159,7 +154,7 @@ class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
     num_audio_query_token: int = 1
     second_per_window: float = 0.333333
     second_stride: float = 0.333333
-    audio_llama_proj_model: Path | GSPath | None = None  # TODO (milad): Does this conflict with `ckpt`?
+    audio_llama_proj_model: Path | GSPath | None = None
     freeze_audio_llama_proj: bool = False
     device: str = "cuda"
     lora: bool = True
@@ -201,9 +196,6 @@ class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
 
 
 class Config(BaseSettings, extra="forbid", validate_assignment=True):
-    # TODO (milad) we can do some validations here based on the mode we're in and decide
-    # if we expect a generate/run/dataset configs or not
-
     model: ModelConfig
     run: RunConfig | None = None
     datasets: DatasetsConfig | None = None

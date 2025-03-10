@@ -141,11 +141,9 @@ class NatureLMDataset(Dataset):
 
         ann_path = Path(ann_path)
 
-        # TODO: this should be done in config validation
         if not ann_path.exists():
             raise FileNotFoundError(f"Dataset file {ann_path} not found")
 
-        # TODO: if this takes a while and we usually use jsonl then let's do that first?
         try:
             with open(ann_path, "r") as f:
                 data = json.load(f)
@@ -489,7 +487,7 @@ class NatureLMDataset(Dataset):
             and "icl" not in ann.get("task", "")
             and "caption" not in ann.get("task", "")
             and "animal-instructions" not in ann.get("task", "")
-        )  # TODO: Any tasks to exclude w/ multiple audios?
+        )
 
         task = ann.get("task", "asr")
         text = ann["text"]

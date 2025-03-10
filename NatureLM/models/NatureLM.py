@@ -99,7 +99,6 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
             # An issue with tiny-llama is that pad_token_id was set to -1, but
             # model.save_pretrained checks generation configs and does not allow -1 as
             # pad_token_id
-            # TODO: we're not using tiny-llama for CPU tests anymore. Remove this when we're sure we don't need it?
             self.llama_model.generation_config.pad_token_id = self.llama_tokenizer.pad_token_id
         else:
             self.llama_model = AutoModelForCausalLM.from_pretrained(
@@ -233,9 +232,6 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
             device=config.device,
         )
         model.config = config
-        # TODO: it's a bit strange that we do checkpoint loading here but not in __init__
-        # We already have a load_model() method that does this, so maybe we should move
-        # the checkpoint logic there?
         ckpt_path = config.ckpt
         if ckpt_path:
             logging.info(f"⏳ Load NatureLM ckpt from: {ckpt_path}")

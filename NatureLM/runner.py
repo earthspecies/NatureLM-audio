@@ -224,7 +224,6 @@ class Runner:
         overall_results = []  # Store all results for overall metrics
 
         # Calculate N based on decode_ratio
-        # TODO: move to config?
         if decode_ratio <= 0.0:
             N = float("inf")  # Effectively never run generate
         elif decode_ratio >= 1.0:
@@ -340,7 +339,7 @@ class Runner:
 
         # Compute and log per-task metrics
         for task, res in per_task_res.items():
-            if "caption-none" in task:  # TODO: this task hangs otherwise, debug.
+            if "caption-none" in task:
                 continue
 
             if self.use_distributed:

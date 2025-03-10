@@ -183,8 +183,6 @@ class BandMask(nn.Module):
 
 
 class Shift(nn.Module):
-    # TODO: reimplement with masking
-
     def __init__(self, shift=8192, same=False, rngth=None):
         """
         :param shift: randomly shifts the signals up to a given factor

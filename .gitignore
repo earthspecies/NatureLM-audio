@@ -164,12 +164,8 @@ cython_debug/
 
 **/.DS_Store
 
-# TODO: revisit these:
-launch.sh
-
 *.pyc
 /output
-arnold.sh
 /configs_local
 
 beans/data/
