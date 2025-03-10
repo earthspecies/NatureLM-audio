@@ -11,7 +11,13 @@ cd NatureLM-audio
 uv sync
 ```
 
-Project entrypoints are then available with `uv run naturelm`
+Project entrypoints are then available with `uv run naturelm`.
+
+If you're not using `uv` you can install the package and its depdencies in your environment of choice with:
+
+```
+pip install -r requirements.txt
+```
 
 ## Running the inference web app
 
