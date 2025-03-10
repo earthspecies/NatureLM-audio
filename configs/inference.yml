@@ -4,7 +4,7 @@ model:
   ckpt: "gs://foundation-models/iclr/s2_e160.pt"
 
   freeze_beats: True
-  freeze_llama: True
+  # freeze_llama: True
 
   use_audio_Qformer: True
   max_pooling: False
@@ -26,6 +26,33 @@ model:
   prompt_template: "<|start_header_id|>user<|end_header_id|>\n\n{}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
   max_txt_len: 160
   end_sym: <|end_of_text|>
+
+  beats_cfg:
+    input_patch_size: 16
+    embed_dim: 512
+    conv_bias: False
+    encoder_layers: 12
+    encoder_embed_dim: 768
+    encoder_ffn_embed_dim: 3072
+    encoder_attention_heads: 12
+    activation_fn: "gelu"
+    layer_wise_gradient_decay_ratio: 0.6
+    layer_norm_first: False
+    deep_norm: True
+    dropout: 0.0
+    attention_dropout: 0.0
+    activation_dropout: 0.0
+    encoder_layerdrop: 0.05
+    dropout_input: 0.0
+    conv_pos: 128
+    conv_pos_groups: 16
+    relative_position_embedding: True
+    num_buckets: 320
+    max_distance: 800
+    gru_rel_pos: True
+    finetuned_model: True
+    predictor_dropout: 0.0
+    predictor_class: 527
 
 generate:
   max_new_tokens: 300

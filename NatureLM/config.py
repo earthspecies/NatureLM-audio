@@ -98,6 +98,40 @@ class DatasetsConfig(BaseModel, extra="forbid", validate_assignment=True):
         return path
 
 
+class BeatsConfig(BaseModel, extra="forbid", validate_assignment=True):
+    input_patch_size: int = -1
+    embed_dim: int = 512
+    conv_bias: bool = False
+
+    encoder_layers: int = 12
+    encoder_embed_dim: int = 768
+    encoder_ffn_embed_dim: int = 3072
+    encoder_attention_heads: int = 12
+    activation_fn: str = "gelu"
+
+    layer_wise_gradient_decay_ratio: float = 0.6
+    layer_norm_first: bool = False
+    deep_norm: bool = True
+
+    dropout: float = 0.0
+    attention_dropout: float = 0.0
+    activation_dropout: float = 0.0
+    encoder_layerdrop: float = 0.05
+    dropout_input: float = 0.0
+
+    conv_pos: int = 128
+    conv_pos_groups: int = 16
+
+    relative_position_embedding: bool = True
+    num_buckets: int = 320
+    max_distance: int = 800
+    gru_rel_pos: bool = True
+
+    finetuned_model: bool = True
+    predictor_dropout: float = 0.0
+    predictor_class: int = 527
+
+
 class GenerateConfig(BaseModel, extra="forbid", validate_assignment=True):
     max_new_tokens: int
     num_beams: int
@@ -114,9 +148,9 @@ class GenerateConfig(BaseModel, extra="forbid", validate_assignment=True):
 class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
     llama_path: Path  # TODO: this is the default in the init() but does it make sense?
     beats_path: Path | GSPath | None = None
+    beats_cfg: BeatsConfig
     ckpt: Path | GSPath | None = None
     freeze_beats: bool = True
-    freeze_llama: bool
     use_audio_Qformer: bool = True
     max_pooling: bool = False
     downsample_factor: int = 4

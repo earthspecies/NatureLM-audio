@@ -11,7 +11,7 @@ from typing import Any, Union
 import torch
 import torch.nn as nn
 
-from NatureLM.storage_utils import GSPath, is_gcs_path, upload_directory_to_gcs
+from NatureLM.storage_utils import GSPath, is_gcs_path
 
 logger = logging.getLogger(__name__)
 
@@ -104,21 +104,3 @@ def save_model_checkpoint(
         torch_save_to_bucket(save_obj, save_path)
     else:
         torch.save(save_obj, save_path)
-
-
-def save_hf_model_to_gcs(model, tokenizer, gcs_path: Union[str, os.PathLike, GSPath]) -> None:
-    """
-    Save a HuggingFace model (and tokenizer) to Google Cloud Storage with optimization options.
-
-    Args:
-        model: HuggingFace model with save_pretrained method
-        tokenizer: HuggingFace tokenizer with save_pretrained method
-        gcs_path: GCS path string starting with gs://, e.g. 'gs://bucket-name/model-path'
-        compress: If True, compresses files before upload (best for text files)
-    """
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        # Save model locally first
-        tokenizer.save_pretrained(tmp_dir)
-        model.save_pretrained(tmp_dir)
-        upload_directory_to_gcs(tmp_dir, gcs_path)

@@ -14,21 +14,21 @@
 
 import logging
 import os
-import tempfile
 from pathlib import Path
 from typing import Literal, Union
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from huggingface_hub import PyTorchModelHubMixin
 from peft import LoraConfig, TaskType, get_peft_model
 from torch.nn import CrossEntropyLoss
 from torch.nn.utils.rnn import pad_sequence
 from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaList
 
 from NatureLM.checkpoint_utils import save_model_checkpoint
-from NatureLM.config import ModelConfig, save_config_as_yaml
-from NatureLM.storage_utils import GSPath, is_gcs_path, upload_directory_to_gcs
+from NatureLM.config import BeatsConfig, ModelConfig, save_config_as_yaml
+from NatureLM.storage_utils import GSPath
 from NatureLM.utils import universal_torch_load
 
 from .beats.BEATs import BEATs, BEATsConfig
@@ -38,11 +38,13 @@ from .utils import StoppingCriteriaSub
 torch.backends.cuda.matmul.allow_tf32 = True
 
 
-class NatureLM(nn.Module):
+class NatureLM(nn.Module, PyTorchModelHubMixin):
     def __init__(
         self,
+        *,
         llama_path: Path,
         beats_path: Path | GSPath | None = None,
+        beats_cfg: BeatsConfig,
         freeze_beats: bool = True,
         use_audio_Qformer: bool = True,
         max_pooling: bool = False,
@@ -67,6 +69,7 @@ class NatureLM(nn.Module):
         super().__init__()
 
         self.beats_path = beats_path
+        self.beats_cfg = beats_cfg
         self.use_audio_Qformer = use_audio_Qformer
         self.max_pooling = max_pooling
         self.window_level_Qformer = window_level_Qformer
@@ -128,11 +131,12 @@ class NatureLM(nn.Module):
             logging.info("LoRA Training")
 
         logging.info("Loading BEATs Model")
-        beats_ckpt = universal_torch_load(self.beats_path, cache_mode="use", map_location="cpu")
-        beats_cfg = BEATsConfig(beats_ckpt["cfg"])
-        self.beats = BEATs(beats_cfg)
-        self.beats_cfg = BEATsConfig.to_dict(beats_cfg)
-        self.beats.load_state_dict(beats_ckpt["model"])
+        self.beats = BEATs(cfg=BEATsConfig(dict(self.beats_cfg)))
+
+        if self.beats_path:
+            beats_ckpt = universal_torch_load(self.beats_path, cache_mode="none", map_location="cpu")
+            self.beats.load_state_dict(beats_ckpt["model"])
+
         self.ln_audio = nn.LayerNorm(self.beats.cfg.encoder_embed_dim)
         if freeze_beats:
             for param in self.beats.parameters():
@@ -241,41 +245,6 @@ class NatureLM(nn.Module):
 
         return model
 
-    @classmethod
-    def from_pretrained(
-        cls, checkpoint_path: Union[str, os.PathLike], download_to: Union[str, os.PathLike] = None
-    ) -> "NatureLM":
-        """Load a pretrained model from a local directory or GCS bucket.
-
-        Args:
-            checkpoint_path (str | os.PathLike): The path to the checkpoint directory.
-            download_to (str | os.PathLike): The directory to download the checkpoint to if it is a GCS path.
-                Default: None, which will download the checkpoint to the current working directory under the
-                same name as the GCS path.
-
-        Returns:
-            NatureLM: The loaded model.
-        """
-        if is_gcs_path(checkpoint_path):
-            checkpoint_path = GSPath(checkpoint_path)
-            if download_to:
-                download_to = Path(download_to)
-            else:
-                download_to = Path(checkpoint_path.name)
-            logging.info(f"Downloading checkpoint from {str(checkpoint_path)} to local directory {str(download_to)}")
-            checkpoint_path.download_to(download_to)
-            checkpoint_path = download_to
-
-        config_path = Path(checkpoint_path) / "model_config.yaml"
-        config = ModelConfig.from_yaml(config_path)
-        config.llama_path = Path(checkpoint_path) / "llama"
-        config.beats_path = Path(checkpoint_path) / "beats.pt"
-        config.audio_llama_proj_model = Path(checkpoint_path) / "audio_llama_proj.pt"
-        config.ckpt = Path(checkpoint_path) / "model.pt"
-        model = cls.from_config(config)
-
-        return model
-
     def _save_to_local(
         self, output_dir: Union[str, os.PathLike], use_distributed: bool = False, drop_untrained_params: bool = False
     ) -> None:
@@ -311,25 +280,6 @@ class NatureLM(nn.Module):
             audio_llama_proj_path,
             drop_untrained_params=drop_untrained_params,
         )
-
-    def save_pretrained(
-        self, output_dir: Union[str, os.PathLike], use_distributed: bool = False, drop_untrained_params: bool = False
-    ) -> None:
-        """Save the model with all components to a local directory / GCS bucket.
-
-        Args:
-            output_dir (str | os.PathLike): The directory to save the model to.
-            use_distributed (bool): Whether the model is distributed, if so, unwrap it. Default: False.
-            drop_untrained_params (bool): Whether to drop untrained parameters to reduce size of saved checkpoint.
-                Caution: This will make the checkpoint unusable for inference. Default: False.
-        """
-        if is_gcs_path(output_dir):
-            output_dir = GSPath(output_dir)
-            with tempfile.TemporaryDirectory() as tmpdir:
-                self._save_to_local(tmpdir, use_distributed, drop_untrained_params)
-                upload_directory_to_gcs(Path(tmpdir), output_dir)
-
-        self._save_to_local(output_dir, use_distributed, drop_untrained_params)
 
     @staticmethod
     def init_audio_Qformer(num_query_token, audio_width, num_hidden_layers=2):
