@@ -19,7 +19,7 @@ Project entrypoints are then available with `uv run naturelm`
 uv run naturelm inference-app --cfg-path configs/inference.yml
 ```
 
-## Instantiating the model
+## Instantiating the model from checkpoint
 
 ```py
 from NatureLM.models import NatureLM
