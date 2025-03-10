@@ -1,10 +1,7 @@
 model:
   llama_path: "meta-llama/Meta-Llama-3.1-8B-Instruct"
-  beats_path: "gs://foundation-models/beats_ckpts/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt"
-  ckpt: "gs://foundation-models/iclr/s2_e160.pt"
 
   freeze_beats: True
-  # freeze_llama: True
 
   use_audio_Qformer: True
   max_pooling: False

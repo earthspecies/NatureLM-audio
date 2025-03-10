@@ -1,12 +1,11 @@
 model:
   llama_path: "meta-llama/Meta-Llama-3.1-8B-Instruct"
-  beats_path: "gs://foundation-models/beats_ckpts/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt"
+  beats_path: "path/to/BEATs_iter3_plus_AS2M_finetuned_on_AS2M_cpt2.pt"
   ckpt: ""
 
   flash_attn: flash_attention_2
 
   freeze_beats: False
-  # freeze_llama: True
 
   use_audio_Qformer: True
   max_pooling: False
@@ -60,9 +59,9 @@ model:
     predictor_class: 527
 
 datasets:
-  train_ann_path: "/home/ubuntu/foundation-model-storage/foundation-model-data/data/compiled-datasets/v1.3/classification_only_train_no_inat_valid.jsonl"
-  valid_ann_path: "/home/ubuntu/foundation-model-storage/foundation-model-data/data/compiled-datasets/v1.3/classification_only_eval_no_inat_valid.jsonl"
-  test_ann_path: "/home/ubuntu/foundation-model-storage/foundation-model-data/data/compiled-datasets/v1.3/classification_only_eval_no_inat_valid.jsonl"
+  train_ann_path: "/path/tp/classification_only_train_no_inat_valid.jsonl"
+  valid_ann_path: "/path/tp/classification_only_eval_no_inat_valid.jsonl"
+  test_ann_path: "/path/tp/classification_only_eval_no_inat_valid.jsonl"
 
   audio_max_length_seconds: 10
 
@@ -107,17 +106,17 @@ run:
     flip: 0.1 # random flip, ratio
 
     noise_dirs:
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/demand_10s"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/idmt"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/tut2016_10s"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/urbansound"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/freesound_10s"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/orcasound_shipnoise_10s"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/deepship_10s"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/shipsear_10s"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/wham_noise"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/audioset"
-      - "/home/ubuntu/foundation-model-storage/foundation-model-data/audio_16k/noise/ssw-detection"
+      - "/path/to/audio_16k/noise/demand_10s"
+      - "/path/to/audio_16k/noise/idmt"
+      - "/path/to/audio_16k/noise/tut2016_10s"
+      - "/path/to/audio_16k/noise/urbansound"
+      - "/path/to/audio_16k/noise/freesound_10s"
+      - "/path/to/audio_16k/noise/orcasound_shipnoise_10s"
+      - "/path/to/audio_16k/noise/deepship_10s"
+      - "/path/to/audio_16k/noise/shipsear_10s"
+      - "/path/to/audio_16k/noise/wham_noise"
+      - "/path/to/audio_16k/noise/audioset"
+      - "/path/to/audio_16k/noise/ssw-detection"
     noise_prob: 0.4
     time_scale_prob: 0.00
     mask_audio_prob: 0.10
