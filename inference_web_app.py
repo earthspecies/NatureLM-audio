@@ -271,8 +271,7 @@ def main(
     device: str = "cuda:0",
 ):
     cfg = Config.from_sources(yaml_file=cfg_path, cli_args=options)
-
-    model = NatureLM.from_config(cfg.model)
+    model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio", force_download=True)
     model.to(device)
     model.eval()
 
