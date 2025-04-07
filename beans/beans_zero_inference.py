@@ -31,6 +31,7 @@ def main():
     parser.add_argument("--beans_config_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--num_workers", type=int, default=8)
+    parser.add_argument("--project_id", type=str, help="Google cloud project id, oka...")
     args = parser.parse_args()
 
     # load model
@@ -45,7 +46,10 @@ def main():
     # Load data
     if is_gcs_path(args.data_path):
         data_path = GSPath(args.data_path)
-        ds = load_dataset("arrow", data_files=data_path / "*.arrow", streaming=False, split="train", name="beans-zero")
+        ds = load_dataset("arrow", data_files=data_path / "*.arrow", streaming=False,
+                          split="train",
+                          name="beans-zero",
+                          storage_options={"project": args.project_id})
     else:
         data_path = Path(args.data_path)
         ds = load_from_disk(data_path)
