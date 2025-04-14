@@ -23,12 +23,19 @@ def common_options(f):
 
 @click.command()
 @click.option("--cfg-path", required=True, type=Path, help="Path to NatureLM model configuration file")
-@click.option("--beans-zero-config-path", required=True, type=Path, help="Path to the BEANS config file")
-@click.option("--data-path", required=True, type=Path, help="Path to the dataset")
-@click.option("--output-path", required=True, type=Path, help="Path to save the output results")
+@click.option("--data-path", default="EarthSpeciesProject/BEANS-Zero", type=str, help="Path to the dataset")
+@click.option(
+    "--beans-zero-config-path",
+    default="beans_zero_dataset_config.json",
+    type=Path,
+    help="Path to the BEANS config file",
+)
+@click.option(
+    "--output-path", default="beans_zero_eval_output.jsonl", type=Path, help="Path to save the output results"
+)
 @click.option("--batch-size", default=16, type=int, help="Batch size for inference")
 @click.option("--num-workers", default=0, type=int, help="Number of workers for DataLoader")
-def beans_zero(cfg_path, beans_zero_config_path, data_path, output_path, batch_size, num_workers):
+def beans_zero(cfg_path, data_path, beans_zero_config_path, output_path, batch_size, num_workers):
     """Run inference on the BEANS-Zero dataset."""
     beans_zero_infer_fn(
         cfg_path=cfg_path,

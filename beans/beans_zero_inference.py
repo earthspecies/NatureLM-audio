@@ -17,6 +17,9 @@ from NatureLM.utils import move_to_device
 
 DEFAULT_MAX_LENGTH_SECONDS = 10
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+this_dir = Path(__file__).parent
+BEANS_ZERO_CONFIG_PATH = this_dir.parent / "beans_zero_config.json"
+DEFAULT_CONFIG_PATH = this_dir.parent / "configs" / "inference.yml"
 
 
 def load_beans_cfg(cfg_path: str | Path):
@@ -27,12 +30,23 @@ def load_beans_cfg(cfg_path: str | Path):
 
 def parse_args():
     parser = argparse.ArgumentParser("Run BEANS-Zero inference")
-    parser.add_argument("--data_path", type=str, required=True)
-    parser.add_argument("--output_path", type=str, required=True)
-    parser.add_argument("--cfg-path", type=str, required=True)
-    parser.add_argument("--beans_zero_config_path", type=str, required=True)
-    parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--num_workers", type=int, default=0)
+    parser.add_argument(
+        "--cfg-path", type=str, default=DEFAULT_CONFIG_PATH, help="Path to the NatureLM model config file"
+    )
+    parser.add_argument(
+        "--data_path",
+        type=str,
+        default="EarthSpeciesProject/BEANS-Zero",
+        help="Path to the BEANS-Zero dataset. If a local or a google cloud bucket path is not provided, will download from the hub.",
+    )
+    parser.add_argument(
+        "--output_path", type=str, default="beans_zero_eval_output.jsonl", help="Path to save the output results"
+    )
+    parser.add_argument(
+        "--beans_zero_config_path", type=str, default=BEANS_ZERO_CONFIG_PATH, help="Path to the BEANS config file"
+    )
+    parser.add_argument("--batch_size", type=int, default=16, help="Batch size for inference")
+    parser.add_argument("--num_workers", type=int, default=0, help="Number of workers for DataLoader")
     args = parser.parse_args()
 
     return args
@@ -142,7 +156,7 @@ def main(
 
         # save intermediate results as dataframe
         df = pd.DataFrame(outputs)
-        df.to_json(output_path, orient="records", lines=True)
+        df.to_json(str(output_path), orient="records", lines=True)
         print(f"Saved intermediate results to {output_path}")
     #     torch.cuda.empty_cache()
 
