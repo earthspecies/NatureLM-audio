@@ -70,7 +70,7 @@ allow-direct-references = true
 
 [project.scripts]
 naturelm = "cli:naturelm"
-beans = "cli:beans"
+beans = "cli:beans_zero"
 
 [tool.uv]
 default-groups = ["beans"]

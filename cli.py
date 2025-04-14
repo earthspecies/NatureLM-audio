@@ -3,7 +3,8 @@ from pathlib import Path
 import click
 import torch
 
-# from beans.run_inference import run_inference as benchmark_fn
+from beans.beans_zero_inference import main as beans_zero_infer_fn
+from infer import main as infer_fn
 from inference_web_app import main as app_fn
 from train import main as train_fn
 
@@ -21,8 +22,22 @@ def common_options(f):
 
 
 @click.command()
-def beans():
-    pass
+@click.option("--cfg-path", required=True, type=Path, help="Path to NatureLM model configuration file")
+@click.option("--beans-zero-config-path", required=True, type=Path, help="Path to the BEANS config file")
+@click.option("--data-path", required=True, type=Path, help="Path to the dataset")
+@click.option("--output-path", required=True, type=Path, help="Path to save the output results")
+@click.option("--batch-size", default=16, type=int, help="Batch size for inference")
+@click.option("--num-workers", default=0, type=int, help="Number of workers for DataLoader")
+def beans_zero(cfg_path, beans_zero_config_path, data_path, output_path, batch_size, num_workers):
+    """Run inference on the BEANS-Zero dataset."""
+    beans_zero_infer_fn(
+        cfg_path=cfg_path,
+        beans_zero_config_path=beans_zero_config_path,
+        data_path=data_path,
+        output_path=output_path,
+        batch_size=batch_size,
+        num_workers=num_workers,
+    )
 
 
 @click.group()
@@ -34,6 +49,24 @@ def naturelm():
 @common_options
 def train(cfg_path, options):
     train_fn(cfg_path=cfg_path, options=options)
+
+
+@naturelm.command()
+@click.option("--cfg-path", required=True, type=Path, help="Path to NatureLM model configuration file")
+@click.option("--audio-path", required=True, type=Path, help="Path to the audio file or directory")
+@click.option("--query", required=True, type=str, help="Query for the model")
+@click.option("--output-path", default="inference_output.jsonl", type=Path, help="Output path for the results")
+@click.option("--window-length-seconds", default=10.0, type=float, help="Length of the sliding window in seconds")
+@click.option("--hop-length-seconds", default=10.0, type=float, help="Hop length for the sliding window in seconds")
+def infer(cfg_path, audio_path, query, output_path, window_length_seconds, hop_length_seconds):
+    infer_fn(
+        cfg_path=cfg_path,
+        audio_path=audio_path,
+        query=query,
+        output_path=output_path,
+        window_length_seconds=window_length_seconds,
+        hop_length_seconds=hop_length_seconds,
+    )
 
 
 @naturelm.command()

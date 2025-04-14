@@ -5,11 +5,9 @@ import os
 from dataclasses import dataclass, field
 
 import numpy as np
+import resampy
 import soundfile as sf
 import torch
-import torchaudio
-
-# from torch.nn.utils.rnn import pad_sequence
 
 
 @dataclass
@@ -66,9 +64,11 @@ class NatureLMAudioProcessor:
 
         # Resample
         if input_sr is not None and input_sr != self.sample_rate:
-            audio = torchaudio.functional.resample(
-                torch.from_numpy(audio), orig_freq=input_sr, new_freq=self.sample_rate
-            )
+            # audio = torchaudio.functional.resample(
+            #     torch.from_numpy(audio), orig_freq=input_sr, new_freq=self.sample_rate
+            # )
+            audio = resampy.resample(audio, input_sr, self.sample_rate)
+            audio = torch.from_numpy(audio.squeeze())
         else:
             audio = torch.from_numpy(audio)
 
@@ -99,7 +99,7 @@ class NatureLMAudioProcessor:
         self,
         audios: list[list[float] | np.ndarray] | list[str | os.PathLike],
         instructions: list[str],
-        input_sample_rates: list[str],
+        input_sample_rates: list[int],
     ) -> tuple[torch.Tensor, list[str]]:
         """Prepare audios and instructions for inference
 
@@ -109,7 +109,7 @@ class NatureLMAudioProcessor:
             The audio samples or file paths
         instructions : list[str]
             The instructions or queries
-        input_sample_rates : list[str]
+        input_sample_rates : list[int]
             The sample rates of the input audio samples
 
         Returns
@@ -187,6 +187,7 @@ class NatureLMAudioEvalProcessor(NatureLMAudioProcessor):
             self.dataset_labels = set()
 
     def prepare_instruction(self, instruction: str) -> str:
+        """Add the audio token placeholder to the instruction and format it"""
         if self.task == "detection" and len(self.dataset_labels) > self.threshold_too_many_detection_labels:
             instruction = self.detection_prompt
 
@@ -194,18 +195,6 @@ class NatureLMAudioEvalProcessor(NatureLMAudioProcessor):
             instruction = self.audio_token_placeholder + instruction
 
         instruction = self.prompt_template.format(prompt=instruction.strip())
-
-        # If we want to tokenize using the tokenizer rather than apply the template
-        # if self.tokenize:
-
-        # messages = [{"role": "user", "content": instruction}]
-        # instruction = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True).removeprefix(self.tokenizer.bos_token)
-
-        # instruction = re.sub(
-        #     r"<\|start_header_id\|>system<\|end_header_id\|>\n\nCutting Knowledge Date: [^\n]+\nToday Date: [^\n]+\n\n<\|eot_id\|>",
-        #     "",
-        #     instruction,
-        # )
 
         return instruction
 
@@ -233,6 +222,7 @@ class NatureLMInferenceDataset(torch.utils.data.Dataset):
         sample = self.ds[idx]
         input_sample_rate = json.loads(sample["metadata"])["sample_rate"]
         audio_tensor = self.processor.prepare_audio(sample["audio"], input_sample_rate)
+
         instruction = self.processor.prepare_instruction(sample["instruction"])
         return {
             "raw_wav": audio_tensor,
@@ -265,16 +255,7 @@ def collater(samples: list[dict]) -> dict:
     processing in the audio model. To keep which audio belongs to which sample, we add
     the audio_chunk_sizes key to the batch dictionary.
     """
-
-    # audio_chunk_sizes = []
-    # for s in samples:
-    #     chunk_size = len(s["raw_wav"])
-    #     audio_chunk_sizes.append(chunk_size)
-
     raw_wav = torch.stack([s["raw_wav"] for s in samples])
-    # raw_wav_length = torch.tensor([len(a) for a in raw_wav])
-    # raw_wav = pad_sequence(raw_wav, batch_first=True, padding_value=0)
-    # paddding_mask = torch.arange(raw_wav.size(1)).unsqueeze(0) >= raw_wav_length.unsqueeze(1)
     paddding_mask = torch.zeros_like(raw_wav).to(torch.bool)
 
     text = [s["text"] for s in samples]

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -15,6 +16,7 @@ from NatureLM.storage_utils import GSPath, is_gcs_path
 from NatureLM.utils import move_to_device
 
 DEFAULT_MAX_LENGTH_SECONDS = 10
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
 def load_beans_cfg(cfg_path: str | Path):
@@ -23,41 +25,72 @@ def load_beans_cfg(cfg_path: str | Path):
     return beans_cfg
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser("Run BEANS-Zero inference")
     parser.add_argument("--data_path", type=str, required=True)
     parser.add_argument("--output_path", type=str, required=True)
-    parser.add_argument("--model_config_path", type=str, required=True)
-    parser.add_argument("--beans_config_path", type=str, required=True)
+    parser.add_argument("--cfg-path", type=str, required=True)
+    parser.add_argument("--beans_zero_config_path", type=str, required=True)
     parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--num_workers", type=int, default=8)
-    parser.add_argument("--project_id", type=str, help="Google cloud project id, oka...")
+    parser.add_argument("--num_workers", type=int, default=0)
     args = parser.parse_args()
 
+    return args
+
+
+def main(
+    cfg_path: str | Path,
+    beans_zero_config_path: str | Path,
+    data_path: str | Path,
+    output_path: str | Path,
+    batch_size: int,
+    num_workers: int = 0,
+) -> None:
+    """
+    Main function to run inference on the BEANS-Zero dataset.
+
+    Args:
+        cfg_path (str | Path): Path to the configuration file.
+        beans_zero_config_path (str | Path): Path to the BEANS config json file.
+        data_path (str | Path): Path to the dataset.
+        output_path (str | Path): Path to save the output results.
+        batch_size (int): Batch size for inference.
+        num_workers (int): Number of workers for DataLoader.
+            Default is 0. Currently, its best to stick to 0 because of issues with resampy.
+    """
     # load model
     print("Loading model")
     model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio")
-    model = model.to("cuda:0").eval()
+    model = model.to(DEVICE).eval()
     model.llama_tokenizer.pad_token_id = model.llama_tokenizer.eos_token_id
+    model.llama_model.generation_config.pad_token_id = model.llama_tokenizer.pad_token_id
 
-    cfg = Config.from_sources(args.model_config_path)
-    # cfg.generate.temperature = None  # do_sample is False
+    cfg = Config.from_sources(cfg_path)
 
     # Load data
-    if is_gcs_path(args.data_path):
-        data_path = GSPath(args.data_path)
-        ds = load_dataset("arrow", data_files=data_path / "*.arrow", streaming=False,
-                          split="train",
-                          name="beans-zero",
-                          storage_options={"project": args.project_id})
+    if is_gcs_path(data_path):
+        data_path = GSPath(data_path)
+        ds = load_dataset(
+            "arrow",
+            data_files=data_path / "*.arrow",
+            streaming=False,
+            split="train",
+            name="beans-zero",
+        )
     else:
-        data_path = Path(args.data_path)
-        ds = load_from_disk(data_path)
+        data_path = Path(data_path)
+
+        # check if path is local and exists
+        if not data_path.exists():
+            # load from hub
+            ds = load_dataset("EarthSpeciesProject/BEANS-Zero", split="test")
+        else:
+            ds = load_from_disk(data_path)
 
     print(f"Loaded dataset with {len(ds)} samples")
 
     # Load BEANS config
-    beans_cfg = load_beans_cfg(args.beans_config_path)
+    beans_cfg = load_beans_cfg(beans_zero_config_path)
     print("Loaded BEANS config")
 
     # extract dataset configs
@@ -90,16 +123,16 @@ def main():
 
         dl = DataLoader(
             NatureLMInferenceDataset(subset, processor),
-            batch_size=args.batch_size,
+            batch_size=batch_size,
             shuffle=False,
             pin_memory=True,
             drop_last=False,
             collate_fn=collater,
-            num_workers=args.num_workers,
+            num_workers=num_workers,
         )
 
         for batch in tqdm(dl, total=len(dl)):
-            batch = move_to_device(batch, "cuda:0")
+            batch = move_to_device(batch, DEVICE)
 
             output = model.generate(batch, cfg.generate, batch["prompt"])
             outputs["prediction"].extend(output)
@@ -109,10 +142,18 @@ def main():
 
         # save intermediate results as dataframe
         df = pd.DataFrame(outputs)
-        df.to_json(args.output_path, orient="records", lines=True)
-        print(f"Saved intermediate results to {args.output_path}")
+        df.to_json(output_path, orient="records", lines=True)
+        print(f"Saved intermediate results to {output_path}")
     #     torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(
+        cfg_path=args.cfg_path,
+        beans_config_path=args.beans_zero_config_path,
+        data_path=args.data_path,
+        output_path=args.output_path,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers,
+    )
