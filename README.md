@@ -1,5 +1,7 @@
 # NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics
 
+![](assets/naturelm-audio-overiew.png)
+
 NatureLM-audio is a multimodal audio-language foundation model designed for bioacoustics. It learns from paired audio-text data to solve bioacoustics tasks, such as generating audio-related descriptions, identifying and detecting species, and more. NatureLM-audio was introduced in the paper:
 
 > [NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics](https://openreview.net/forum?id=hJVdwBpWjt)
