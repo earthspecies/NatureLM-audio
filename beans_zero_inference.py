@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+from beans_zero.evaluate import compute_metrics
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -17,9 +18,9 @@ from NatureLM.utils import move_to_device
 
 DEFAULT_MAX_LENGTH_SECONDS = 10
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-this_dir = Path(__file__).parent
-BEANS_ZERO_CONFIG_PATH = this_dir.parent / "beans_zero_config.json"
-DEFAULT_CONFIG_PATH = this_dir.parent / "configs" / "inference.yml"
+__this_dir = Path(__file__).parent
+BEANS_ZERO_CONFIG_PATH = __this_dir.parent / "beans_zero_config.json"
+DEFAULT_CONFIG_PATH = __this_dir.parent / "configs" / "inference.yml"
 
 
 def load_beans_cfg(cfg_path: str | Path):
@@ -158,7 +159,18 @@ def main(
         df = pd.DataFrame(outputs)
         df.to_json(str(output_path), orient="records", lines=True)
         print(f"Saved intermediate results to {output_path}")
-    #     torch.cuda.empty_cache()
+
+    # run evaluation
+    print("Running evaluation")
+    all_metrics = compute_metrics(df, verbose=True)
+
+    # save final results, replace '.jsonl' with _metrics.json
+    metrics_path = str(output_path).replace(".jsonl", "_metrics.json")
+    with open(metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=4)
+
+    print(f"Saved evaluation results to {metrics_path}")
+    print("Evaluation complete!")
 
 
 if __name__ == "__main__":

@@ -28,6 +28,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaLi
 
 from NatureLM.checkpoint_utils import save_model_checkpoint
 from NatureLM.config import BeatsConfig, ModelConfig, save_config_as_yaml
+from NatureLM.processors import NatureLMAudioProcessor
 from NatureLM.storage_utils import GSPath
 from NatureLM.utils import universal_torch_load
 
@@ -634,6 +635,5 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
                 # constraints=[constraint] if constraint is not None else None
             )
         text = self.llama_tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        # print("output text is", text)
 
         return text

@@ -13,20 +13,23 @@ from NatureLM.models import NatureLM
 from NatureLM.processors import NatureLMAudioProcessor
 from NatureLM.utils import move_to_device
 
-MAX_LENGTH_SECONDS = 10
-MIN_CHUNK_LENGTH_SECONDS = 0.5
-SAMPLE_RATE = 16000  # Assuming the model uses a sample rate of 16kHz
+_MAX_LENGTH_SECONDS = 10
+_MIN_CHUNK_LENGTH_SECONDS = 0.5
+_SAMPLE_RATE = 16000  # Assuming the model uses a sample rate of 16kHz
 _AUDIO_FILE_EXTENSIONS = [".wav", ".mp3", ".flac", ".ogg"]  # Add other audio file formats as needed
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+_DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+_DEFAULT_CONFIG_PATH = Path("configs") / "inference.yml"
 
 
-def load_model_and_config(cfg_path: str | Path = "configs/inference.yml") -> tuple[NatureLM, Config]:
+def load_model_and_config(
+    cfg_path: str | Path = _DEFAULT_CONFIG_PATH, device: str = _DEVICE
+) -> tuple[NatureLM, Config]:
     """Load the NatureLM model and configuration.
     Returns:
         tuple: The loaded model and configuration.
     """
     model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio")
-    model = model.to(DEVICE).eval()
+    model = model.to(device).eval()
     model.llama_tokenizer.pad_token_id = model.llama_tokenizer.eos_token_id
     model.llama_model.generation_config.pad_token_id = model.llama_tokenizer.pad_token_id
 
@@ -40,34 +43,49 @@ def output_template(model_output: str, start_time: float, end_time: float) -> st
 
 
 def sliding_window_inference(
-    audio_path: str | Path,
+    audio: str | Path | np.ndarray,
     query: str,
     processor: NatureLMAudioProcessor,
     model: NatureLM,
     cfg: Config,
     window_length_seconds: float = 10.0,
     hop_length_seconds: float = 10.0,
+    input_sr: int = _SAMPLE_RATE,
+    device: str = _DEVICE,
 ) -> str:
     """Run inference on a long audio file using sliding window approach.
 
     Args:
-        audio_path (str | Path): Path to the audio file.
+        audio (str | Path | np.ndarray): Path to the audio file.
         query (str): Query for the model.
         processor (NatureLMAudioProcessor): Audio processor.
         model (NatureLM): NatureLM model.
         cfg (Config): Model configuration.
         window_length_seconds (float): Length of the sliding window in seconds.
         hop_length_seconds (float): Hop length for the sliding window in seconds.
+        input_sr (int): Sample rate of the audio file.
 
     Returns:
         str: The output of the model.
+
+    Raises:
+        ValueError: If the audio file is too short or if the audio file path is invalid.
     """
-    audio_array, input_sr = sf.read(str(audio_path))
+    if isinstance(audio, str) or isinstance(audio, Path):
+        audio_array, input_sr = sf.read(str(audio))
+    elif isinstance(audio, np.ndarray):
+        audio_array = audio
+        print(f"Using provided sample rate: {input_sr}")
+
     audio_array = audio_array.squeeze()
     if audio_array.ndim > 1:
         axis_to_average = int(np.argmin(audio_array.shape))
         audio_array = audio_array.mean(axis=axis_to_average)
         audio_array = audio_array.squeeze()
+
+    # Do initial check that the audio is long enough
+    if audio_array.shape[-1] < int(_MIN_CHUNK_LENGTH_SECONDS * input_sr):
+        raise ValueError(f"Audio is too short. Minimum length is {_MIN_CHUNK_LENGTH_SECONDS} seconds.")
 
     start = 0
     stride = int(hop_length_seconds * input_sr)
@@ -76,12 +94,11 @@ def sliding_window_inference(
     output = ""
     while True:
         chunk = audio_array[start : start + window_length]
-        if chunk.shape[-1] < int(MIN_CHUNK_LENGTH_SECONDS * input_sr):
+        if chunk.shape[-1] < int(_MIN_CHUNK_LENGTH_SECONDS * input_sr):
             break
 
         # Resamples, pads, truncates and creates torch Tensor
         audio_tensor, prompt_list = processor([chunk], [query], [input_sr])
-        torch.cuda.empty_cache()
 
         input_to_model = {
             "raw_wav": audio_tensor,
@@ -89,7 +106,7 @@ def sliding_window_inference(
             "audio_chunk_sizes": 1,
             "padding_mask": torch.zeros_like(audio_tensor).to(torch.bool),
         }
-        input_to_model = move_to_device(input_to_model, DEVICE)
+        input_to_model = move_to_device(input_to_model, device)
 
         # generate
         prediction: str = model.generate(input_to_model, cfg.generate, prompt_list)[0]
@@ -105,6 +122,78 @@ def sliding_window_inference(
             break
 
     return output
+
+
+class Pipeline:
+    """Pipeline for running NatureLM-audio inference on a list of audio files or audio arrays"""
+
+    def __init__(self, model: NatureLM = None, cfg_path: str | Path = _DEFAULT_CONFIG_PATH):
+        self.cfg_path = cfg_path
+
+        # Load model and config
+        if model is not None:
+            self.cfg = Config.from_sources(cfg_path)
+            self.model = model
+        else:
+            # Download model from hub
+            self.model, self.cfg = load_model_and_config(cfg_path)
+
+        self.processor = NatureLMAudioProcessor(sample_rate=_SAMPLE_RATE, max_length_seconds=_MAX_LENGTH_SECONDS)
+
+    def __call__(
+        self,
+        audios: list[str | Path | np.ndarray],
+        queries: str | list[str],
+        window_length_seconds: float = 10.0,
+        hop_length_seconds: float = 10.0,
+        verbose: bool = False,
+    ) -> list[str]:
+        """Run inference on a list of audio file paths or a single audio file with a
+        single query or a list of queries. If multiple queries are provided,
+        we assume that they are in the same order as the audio files. If a single query
+        is provided, it will be used for all audio files.
+
+        Args:
+            audios (list[str | Path | np.ndarray]): List of audio files or a single audio file.
+            queries (str | list[str]): Query for the model.
+            window_length_seconds (float): Length of the sliding window in seconds.
+            hop_length_seconds (float): Hop length for the sliding window in seconds.
+            verbose (bool): If True, print the output of the model for each audio file.
+            Defaults to False.
+
+        Returns:
+            str | list[str]: The output of the model..
+
+        Raises:
+            ValueError: If the number of audio files and queries do not match.
+
+        Example:
+            >>> pipeline = Pipeline()
+            >>> audios = ["assets/nri-GreenTreeFrogEvergladesNP.mp3"]
+            >>> queries = ["Which species is this? Provide the common name."]
+            >>> results = pipeline(audios, queries)
+            >>> print(results)
+            ['#0.00s - 10.00s#: Green Treefrog\n']
+        """
+        if isinstance(audios, str) or isinstance(audios, Path):
+            audios = [audios]
+
+        if isinstance(queries, str):
+            queries = [queries] * len(audios)
+
+        if len(audios) != len(queries):
+            raise ValueError("Number of audio files and queries must match.")
+
+        # Run inference
+        results = []
+        for audio, query in zip(audios, queries):
+            output = sliding_window_inference(
+                audio, query, self.processor, self.model, self.cfg, window_length_seconds, hop_length_seconds
+            )
+            results.append(output)
+            if verbose:
+                print(f"Processed {audio}, model output:\n=======\n{output}\n=======")
+        return results
 
 
 def parse_args() -> argparse.Namespace:
@@ -185,7 +274,7 @@ def main(
     model, cfg = load_model_and_config(cfg_path)
 
     # Load audio processor
-    processor = NatureLMAudioProcessor(sample_rate=SAMPLE_RATE, max_length_seconds=MAX_LENGTH_SECONDS)
+    processor = NatureLMAudioProcessor(sample_rate=_SAMPLE_RATE, max_length_seconds=_MAX_LENGTH_SECONDS)
 
     # Run inference
     results = {"audio_path": [], "output": []}

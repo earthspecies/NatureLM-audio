@@ -32,8 +32,9 @@ Run `python infer.py --help` for a description of the arguments.
 ```python
 uv run beans --cfg-path configs/inference.yml --data-path "/some/local/path/to/data" --output-path "beans_zero_eval.jsonl"
 ```
-This will run evaluation on the BEANS-Zero dataset, using the model specified in the config file. The results will be saved in `beans_zero_eval.jsonl`.
-Run `python beans/beans_zero_inference.py --help` for a description of the arguments.
+This will run evaluation on the BEANS-Zero dataset, using the model specified in the config file.
+The predictions will be saved in `beans_zero_eval.jsonl` and the evaluation metrics will be saved in `beans_zero_eval_metrics.jsonl`.
+Run `python beans_zero_inference.py --help` for a description of the arguments.
 
 ## Running the inference web app
 
@@ -45,10 +46,40 @@ uv run naturelm inference-app --cfg-path configs/inference.yml
 
 ```py
 from NatureLM.models import NatureLM
-
+# Download the model from HuggingFace
 model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio")
+model = model.eval().to("cuda")
+```
+Use it within your code for inference with the Pipline API.
+```py
+from NatureLM.infer import Pipeline
+
+# pass your audios in as file paths or as numpy arrays
+# NOTE: the Pipeline class will automatically load the audio and convert them to numpy arrays
+audio_path = ["assets/nri-GreenTreeFrogEvergladesNP.mp3"]  # wav, mp3, ogg, flac are supported.
+
+# Create a list of queries. You may also pass a single query as a string for multiple audios.
+# The same query will be used for all audios.
+query = ["Which species is this? Provide the common name."]
+
+pipeline = Pipeline(model=model)
+# NOTE: you can also just do pipeline = Pipeline() which will download the model automatically
+
+# Run the model over the audio in sliding windows of 10 seconds with a hop length of 10 seconds
+results = pipeline(audios, queries, window_length_seconds=10.0, hop_length_seconds=10.0)
+print(results)
+# ['#0.00s - 10.00s#: Green Treefrog\n']
 ```
 
 ## Citation
+If you use this dataset in your research, please cite the following paper:
 
-TODO
+```bibtex
+@inproceedings{robinson2025naturelm,
+  title     = {NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics},
+  author    = {David Robinson and Marius Miron and Masato Hagiwara and Olivier Pietquin},
+  booktitle = {Proceedings of the International Conference on Learning Representations (ICLR)},
+  year      = {2025},
+  url       = {https://openreview.net/forum?id=hJVdwBpWjt}
+}
+```
