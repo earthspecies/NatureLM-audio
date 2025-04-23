@@ -18,7 +18,8 @@ _MIN_CHUNK_LENGTH_SECONDS = 0.5
 _SAMPLE_RATE = 16000  # Assuming the model uses a sample rate of 16kHz
 _AUDIO_FILE_EXTENSIONS = [".wav", ".mp3", ".flac", ".ogg"]  # Add other audio file formats as needed
 _DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-_DEFAULT_CONFIG_PATH = Path("configs") / "inference.yml"
+__this_dir = Path(__file__).parent.parent
+_DEFAULT_CONFIG_PATH = __this_dir / "configs" / "inference.yml"
 
 
 def load_model_and_config(

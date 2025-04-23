@@ -45,13 +45,6 @@ Homepage = "https://earthspecies.github.io/naturelm-audio-demo/"
 Repository = "https://github.com/earthspecies/NatureLM-audio"
 
 [dependency-groups]
-beans = [
-  "kaggle>=1.5.12",
-  "pycocoevalcap>=1.2",
-  "scikit-learn>=1.1.1",
-  "xgboost>=1.6.1",
-]
-
 dev = [
   "pre-commit>=4.0.1",
   "pytest>=7.1.2",
@@ -64,7 +57,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["NatureLM", "beans"]
+packages = ["NatureLM"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -72,9 +65,6 @@ allow-direct-references = true
 [project.scripts]
 naturelm = "cli:naturelm"
 beans = "cli:beans_zero"
-
-[tool.uv]
-default-groups = ["beans"]
 
 [[tool.uv.index]]
 name = "pytorch-cu118"

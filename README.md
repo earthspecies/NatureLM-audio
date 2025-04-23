@@ -43,11 +43,15 @@ This will run inference on all audio files in the `assets` folder, using a windo
 Run `python infer.py --help` for a description of the arguments.
 
 ## Run evaluation on BEANS-Zero
+BEANS-Zero is a zero-shot audio+text benchmark for bioacoustics. The repository for the benchmark can be found [here](https://github.com/earthspecies/beans-zero).
+and the dataset is hosted on HuggingFace [here](https://huggingface.co/datasets/EarthSpeciesProject/BEANS-Zero). 
+> **NOTE**: One of the tasks in BEANS-Zero requires a java 8 runtime environment. If you don't have it installed, that task will be skipped.
 
-```python
+To run evaluation on the BEANS-Zero dataset, you can use the following command:
+
+```bash
 uv run beans --cfg-path configs/inference.yml --data-path "/some/local/path/to/data" --output-path "beans_zero_eval.jsonl"
 ```
-This will run evaluation on the BEANS-Zero dataset, using the model specified in the config file. 
 **CAUTION**: The BEANS-Zero dataset is large (~ 180GB) and will take a long time to run.
 The predictions will be saved in `beans_zero_eval.jsonl` and the evaluation metrics will be saved in `beans_zero_eval_metrics.jsonl`.
 Run `python beans_zero_inference.py --help` for a description of the arguments.
@@ -78,17 +82,17 @@ from NatureLM.infer import Pipeline
 
 # pass your audios in as file paths or as numpy arrays
 # NOTE: the Pipeline class will automatically load the audio and convert them to numpy arrays
-audio_path = ["assets/nri-GreenTreeFrogEvergladesNP.mp3"]  # wav, mp3, ogg, flac are supported.
+audio_paths = ["assets/nri-GreenTreeFrogEvergladesNP.mp3"]  # wav, mp3, ogg, flac are supported.
 
 # Create a list of queries. You may also pass a single query as a string for multiple audios.
 # The same query will be used for all audios.
-query = ["Which species is this? Provide the common name."]
+queries = ["What is the common name for the focal species in the audio? Answer:"]
 
 pipeline = Pipeline(model=model)
 # NOTE: you can also just do pipeline = Pipeline() which will download the model automatically
 
 # Run the model over the audio in sliding windows of 10 seconds with a hop length of 10 seconds
-results = pipeline(audios, queries, window_length_seconds=10.0, hop_length_seconds=10.0)
+results = pipeline(audio_paths, queries, window_length_seconds=10.0, hop_length_seconds=10.0)
 print(results)
 # ['#0.00s - 10.00s#: Green Treefrog\n']
 ```

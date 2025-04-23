@@ -4,8 +4,8 @@ import click
 import torch
 
 from beans_zero_inference import main as beans_zero_infer_fn
-from infer import main as infer_fn
 from inference_web_app import main as app_fn
+from NatureLM.infer import main as infer_fn
 from train import main as train_fn
 
 
