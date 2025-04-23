@@ -146,6 +146,7 @@ class Pipeline:
         queries: str | list[str],
         window_length_seconds: float = 10.0,
         hop_length_seconds: float = 10.0,
+        input_sample_rate: int = _SAMPLE_RATE,
         verbose: bool = False,
     ) -> list[str]:
         """Run inference on a list of audio file paths or a single audio file with a
@@ -154,10 +155,11 @@ class Pipeline:
         is provided, it will be used for all audio files.
 
         Args:
-            audios (list[str | Path | np.ndarray]): List of audio files or a single audio file.
-            queries (str | list[str]): Query for the model.
-            window_length_seconds (float): Length of the sliding window in seconds.
-            hop_length_seconds (float): Hop length for the sliding window in seconds.
+            audios (list[str | Path | np.ndarray]): List of audio file paths or a single audio file path or audio array(s)
+            queries (str | list[str]): Queries for the model.
+            window_length_seconds (float): Length of the sliding window in seconds. Defaults to 10.0.
+            hop_length_seconds (float): Hop length for the sliding window in seconds. Defaults to 10.0.
+            input_sample_rate (int): Sample rate of the audio. Defaults to 16000, which is the model's sample rate.
             verbose (bool): If True, print the output of the model for each audio file.
             Defaults to False.
 
@@ -188,7 +190,14 @@ class Pipeline:
         results = []
         for audio, query in zip(audios, queries):
             output = sliding_window_inference(
-                audio, query, self.processor, self.model, self.cfg, window_length_seconds, hop_length_seconds
+                audio,
+                query,
+                self.processor,
+                self.model,
+                self.cfg,
+                window_length_seconds,
+                hop_length_seconds,
+                input_sr=input_sample_rate,
             )
             results.append(output)
             if verbose:

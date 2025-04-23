@@ -47,7 +47,8 @@ Run `python infer.py --help` for a description of the arguments.
 ```python
 uv run beans --cfg-path configs/inference.yml --data-path "/some/local/path/to/data" --output-path "beans_zero_eval.jsonl"
 ```
-This will run evaluation on the BEANS-Zero dataset, using the model specified in the config file.
+This will run evaluation on the BEANS-Zero dataset, using the model specified in the config file. 
+**CAUTION**: The BEANS-Zero dataset is large (~ 180GB) and will take a long time to run.
 The predictions will be saved in `beans_zero_eval.jsonl` and the evaluation metrics will be saved in `beans_zero_eval_metrics.jsonl`.
 Run `python beans_zero_inference.py --help` for a description of the arguments.
 
