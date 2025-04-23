@@ -37,6 +37,7 @@ dependencies = [
   "tqdm>=4.66.4",
   "wandb>=0.17.3",
   "click>=8.1.7",
+  "beans-zero",
 ]
 
 [project.urls]
@@ -70,7 +71,7 @@ allow-direct-references = true
 
 [project.scripts]
 naturelm = "cli:naturelm"
-beans = "cli:beans"
+beans = "cli:beans_zero"
 
 [tool.uv]
 default-groups = ["beans"]
@@ -98,6 +99,7 @@ torchaudio = [
   { index = "pytorch-cpu", marker = "platform_system == 'Darwin'" },
   { index = "pytorch-cu118", marker = "platform_system == 'Linux'" },
 ]
+beans-zero = { git = "ssh://git@github.com/earthspecies/beans-zero.git" }
 
 [tool.ruff]
 line-length = 120
