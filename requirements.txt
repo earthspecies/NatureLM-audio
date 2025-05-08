@@ -13,7 +13,7 @@ async-timeout==5.0.1 ; python_full_version < '3.11'
 attrs==23.2.0
 audioop-lts==0.2.1 ; python_full_version >= '3.13'
 audioread==3.0.1
-beans-zero @ git+ssh://git@github.com/earthspecies/beans-zero.git@257bb64e7beaaadc1c85a0e5871534be3193ddc0
+beans-zero @ git+https://git@github.com/earthspecies/beans-zero.git@v1.0.0
 bitsandbytes==0.43.1
 bleach==6.2.0
 cachetools==5.5.0
