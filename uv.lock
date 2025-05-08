@@ -245,8 +245,8 @@ wheels = [
 
 [[package]]
 name = "beans-zero"
-version = "0.1.0"
-source = { git = "ssh://git@github.com/earthspecies/beans-zero.git#040b0e594307c1ad1f1e8214691cd2ae622fb482" }
+version = "1.0.0"
+source = { git = "https://github.com/earthspecies/beans-zero.git#31d4487ee6452ae6c31853d45fd38b7d4150372d" }
 dependencies = [
     { name = "click" },
     { name = "datasets" },
@@ -1656,7 +1656,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beans-zero", git = "ssh://git@github.com/earthspecies/beans-zero.git" },
+    { name = "beans-zero", git = "https://github.com/earthspecies/beans-zero.git" },
     { name = "bitsandbytes", specifier = ">=0.43.1" },
     { name = "click", specifier = ">=8.1.7" },
     { name = "cloudpathlib", extras = ["gs"], specifier = ">=0.20.0" },

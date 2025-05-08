@@ -89,7 +89,7 @@ torchaudio = [
   { index = "pytorch-cpu", marker = "platform_system == 'Darwin'" },
   { index = "pytorch-cu118", marker = "platform_system == 'Linux'" },
 ]
-beans-zero = { git = "ssh://git@github.com/earthspecies/beans-zero.git" }
+beans-zero = { git = "https://git@github.com/earthspecies/beans-zero.git" }
 
 [tool.ruff]
 line-length = 120
