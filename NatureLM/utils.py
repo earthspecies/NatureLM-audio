@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
+import resampy
 import soundfile as sf
 import torch
 import torch.nn.functional as F
@@ -263,7 +264,8 @@ def prepare_sample_waveforms(audio_paths, cuda_enabled=True, sr=TARGET_SAMPLE_RA
         if len(audio.shape) == 2:
             audio = audio[:, 0]
         audio = audio[: loaded_sr * 10]
-        audio = torchaudio.functional.resample(torch.from_numpy(audio), loaded_sr, sr)
+        audio = resampy.resample(audio, loaded_sr, sr)
+        audio = torch.from_numpy(audio)
 
         if len(audio) < sr * max_length_seconds:
             pad_size = sr * max_length_seconds - len(audio)
@@ -281,7 +283,11 @@ def prepare_sample_waveforms(audio_paths, cuda_enabled=True, sr=TARGET_SAMPLE_RA
             padding_mask[i, len(audios[i]) :] = True
     audios = torch.stack(audios, dim=0)
 
-    samples = {"raw_wav": audios, "padding_mask": padding_mask, "audio_chunk_sizes": [len(audio_paths)]}
+    samples = {
+        "raw_wav": audios,
+        "padding_mask": padding_mask,
+        "audio_chunk_sizes": [len(audio_paths)],
+    }
     if cuda_enabled:
         samples = move_to_device(samples, "cuda")
 
@@ -314,7 +320,11 @@ def generate_sample_batches(
         batch = chunks[i : i + batch_size]
         padding_mask = torch.zeros((len(batch), sr * chunk_len), dtype=torch.bool)
         batch = torch.stack(batch, dim=0)
-        samples = {"raw_wav": batch, "padding_mask": padding_mask, "audio_chunk_sizes": [1 for _ in range(len(batch))]}
+        samples = {
+            "raw_wav": batch,
+            "padding_mask": padding_mask,
+            "audio_chunk_sizes": [1 for _ in range(len(batch))],
+        }
         if cuda_enabled:
             samples = move_to_device(samples, "cuda")
         yield samples
@@ -331,7 +341,7 @@ def prepare_samples_for_detection(samples, prompt, label):
 
 
 def universal_torch_load(
-    f: str | os.PathLike | GSPath,
+    f: str | os.PathLike,
     *,
     cache_mode: Literal["none", "use", "force"] = "none",
     **kwargs,
@@ -364,6 +374,7 @@ def universal_torch_load(
         IsADirectoryError: If the GCS path points to a directory instead of a file.
         FileNotFoundError: If the local file does not exist.
     """
+
     if is_gcs_path(f):
         gs_path = GSPath(str(f))
         if gs_path.is_dir():

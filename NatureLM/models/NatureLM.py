@@ -28,7 +28,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteriaLi
 
 from NatureLM.checkpoint_utils import save_model_checkpoint
 from NatureLM.config import BeatsConfig, ModelConfig, save_config_as_yaml
-from NatureLM.storage_utils import GSPath
 from NatureLM.utils import universal_torch_load
 
 from .beats.BEATs import BEATs, BEATsConfig
@@ -43,7 +42,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         self,
         *,
         llama_path: Path,
-        beats_path: Path | GSPath | None = None,
+        beats_path: Path | os.PathLike | None = None,
         beats_cfg: BeatsConfig,
         freeze_beats: bool = True,
         use_audio_Qformer: bool = True,
@@ -54,7 +53,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         second_per_window: float = 0.333333,
         second_stride: float = 0.333333,
         downsample_factor: int = 4,
-        audio_llama_proj_model: Path | GSPath | None = None,
+        audio_llama_proj_model: Path | os.PathLike | None = None,
         freeze_audio_llama_proj: bool = False,
         lora: bool = True,
         lora_rank: int = 8,
@@ -164,7 +163,8 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
             logging.info("Loading audio LLAMA proj")
             self.audio_llama_proj = nn.Linear(
-                self.audio_Qformer.config.hidden_size, self.llama_model.config.hidden_size
+                self.audio_Qformer.config.hidden_size,
+                self.llama_model.config.hidden_size,
             )
             if audio_llama_proj_model:
                 logging.info(f"Loading audio LLAMA proj from {audio_llama_proj_model}")
@@ -242,7 +242,10 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         return model
 
     def _save_to_local(
-        self, output_dir: Union[str, os.PathLike], use_distributed: bool = False, drop_untrained_params: bool = False
+        self,
+        output_dir: Union[str, os.PathLike],
+        use_distributed: bool = False,
+        drop_untrained_params: bool = False,
     ) -> None:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -254,7 +257,10 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         # Save the model
         model_path = output_dir / "model.pt"
         save_model_checkpoint(
-            self, model_path, drop_untrained_params=drop_untrained_params, use_distributed=use_distributed
+            self,
+            model_path,
+            drop_untrained_params=drop_untrained_params,
+            use_distributed=use_distributed,
         )
 
         # Save the tokenizer and llama model
@@ -266,7 +272,10 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         if self.beats_path:
             beats_path = output_dir / "beats.pt"
             save_model_checkpoint(
-                self.beats, beats_path, drop_untrained_params=drop_untrained_params, cfg=self.beats_cfg
+                self.beats,
+                beats_path,
+                drop_untrained_params=drop_untrained_params,
+                cfg=self.beats_cfg,
             )
 
         # Save the audio projection
@@ -301,7 +310,9 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
             # Apply 1D Max Pooling along the time dimension
             audio_embeds = F.max_pool1d(
-                audio_embeds.transpose(1, 2), kernel_size=self.downsample_factor, stride=self.downsample_factor
+                audio_embeds.transpose(1, 2),
+                kernel_size=self.downsample_factor,
+                stride=self.downsample_factor,
             ).transpose(1, 2)
             audio_embeds = self.audio_llama_proj(audio_embeds)
 
@@ -309,7 +320,9 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
             audio_atts = ~audio_pad_mask
             # Adjust the padding mask using max pooling
             audio_atts = F.max_pool1d(
-                audio_atts.unsqueeze(1).float(), kernel_size=self.downsample_factor, stride=self.downsample_factor
+                audio_atts.unsqueeze(1).float(),
+                kernel_size=self.downsample_factor,
+                stride=self.downsample_factor,
             ).squeeze(1)
             audio_atts = audio_atts > 0
             # print(f"audio pad mask shape after pooling: {audio_atts.shape}")
@@ -332,7 +345,11 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
                 # Transpose and unfold audio embeddings to create overlapping windows
                 audio_embeds_tr = audio_embeds.transpose(1, 2).unsqueeze(2)
                 audio_embeds_overlap = F.unfold(
-                    audio_embeds_tr, kernel_size=kernel, dilation=1, padding=0, stride=stride
+                    audio_embeds_tr,
+                    kernel_size=kernel,
+                    dilation=1,
+                    padding=0,
+                    stride=stride,
                 )
                 _, _, L = audio_embeds_overlap.shape
                 audio_embeds_overlap = audio_embeds_overlap.view(B, -1, kernel[1], L)
@@ -511,12 +528,20 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
             # Concatenate attention masks: BOS token mask, audio attention mask, text attention mask
             att_mask = torch.cat(
-                [torch.ones(1, device=audio_embeds.device, dtype=audio_att.dtype), audio_att, text_att], dim=0
+                [
+                    torch.ones(1, device=audio_embeds.device, dtype=audio_att.dtype),
+                    audio_att,
+                    text_att,
+                ],
+                dim=0,
             )
 
             # Create targets: Ignore index (-100) for BOS and audio tokens, actual targets for text tokens
             ignore_targets = torch.full(
-                (1 + audio_embed.size(0),), -100, device=audio_embeds.device, dtype=targets.dtype
+                (1 + audio_embed.size(0),),
+                -100,
+                device=audio_embeds.device,
+                dtype=targets.dtype,
             )
             sample_targets = torch.cat([ignore_targets, target], dim=0)
 

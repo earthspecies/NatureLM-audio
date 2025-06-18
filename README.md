@@ -18,20 +18,29 @@ Make sure you're [authenticated to HuggingFace](https://huggingface.co/docs/hugg
 
 ## Installation
 
+### Using `uv` (recommended)
 Clone the repository and install the dependencies:
 
 ```bash
 git clone https://github.com/earthspecies/NatureLM-audio.git
 cd NatureLM-audio
 uv sync
+# If there's no gpu available or you are on MacOS then do
+uv sync --no-group gpu
 ```
-
 Project entrypoints are then available with `uv run naturelm`.
 
-If you're not using `uv` you can install the package and its depdencies in your environment of choice with:
 
+### Without `uv`
+If you're not using `uv`, you can install the package with pip:
+
+**For CPU-only or macOS (without GPU acceleration):**
+```bash
+pip install -e .
 ```
-pip install -r requirements.txt
+For Linux with CUDA support:
+```bash
+pip install -e .[gpu]
 ```
 
 ## Run inference on a set of audio files in a folder
@@ -44,7 +53,7 @@ Run `python infer.py --help` for a description of the arguments.
 
 ## Run evaluation on BEANS-Zero
 BEANS-Zero is a zero-shot audio+text benchmark for bioacoustics. The repository for the benchmark can be found [here](https://github.com/earthspecies/beans-zero).
-and the dataset is hosted on HuggingFace [here](https://huggingface.co/datasets/EarthSpeciesProject/BEANS-Zero). 
+and the dataset is hosted on HuggingFace [here](https://huggingface.co/datasets/EarthSpeciesProject/BEANS-Zero).
 > **NOTE**: One of the tasks in BEANS-Zero requires a java 8 runtime environment. If you don't have it installed, that task will be skipped.
 
 To run evaluation on the BEANS-Zero dataset, you can use the following command:

@@ -3,7 +3,6 @@
 import logging
 import math
 
-import bitsandbytes as bnb
 import torch
 
 from NatureLM.config import OptimizerConfig
@@ -11,7 +10,15 @@ from NatureLM.config import OptimizerConfig
 
 class LinearWarmupStepLRScheduler:
     def __init__(
-        self, optimizer, max_epoch, min_lr, init_lr, decay_rate=1, warmup_start_lr=-1, warmup_steps=0, **kwargs
+        self,
+        optimizer,
+        max_epoch,
+        min_lr,
+        init_lr,
+        decay_rate=1,
+        warmup_start_lr=-1,
+        warmup_steps=0,
+        **kwargs,
     ):
         self.optimizer = optimizer
 
@@ -45,7 +52,15 @@ class LinearWarmupStepLRScheduler:
 
 class LinearWarmupCosineLRScheduler:
     def __init__(
-        self, optimizer, max_epoch, iters_per_epoch, min_lr, init_lr, warmup_steps=0, warmup_start_lr=-1, **kwargs
+        self,
+        optimizer,
+        max_epoch,
+        iters_per_epoch,
+        min_lr,
+        init_lr,
+        warmup_steps=0,
+        warmup_start_lr=-1,
+        **kwargs,
     ):
         self.optimizer = optimizer
 
@@ -127,6 +142,8 @@ def get_optimizer(model, config: OptimizerConfig):
             betas=(0.9, beta2),
         )
     else:
+        import bitsandbytes as bnb
+
         optimizer = bnb.optim.PagedAdamW8bit(
             optim_params,
             lr=float(config.init_lr),

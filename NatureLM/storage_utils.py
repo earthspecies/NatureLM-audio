@@ -18,6 +18,13 @@ def _get_client():
     return cloudpathlib.GSClient(storage_client=Client())
 
 
+try:
+    _gcp_storage_client = _get_client()
+except Exception:
+    logger.warning("Failed to initialize GCS client." "Training wont be able to use GSPath or R2Path without a client.")
+    _gcp_storage_client = None
+
+
 class GSPath(cloudpathlib.GSPath):
     """
     A wrapper for the GSPath class that provides a default client to the constructor.
@@ -30,5 +37,5 @@ class GSPath(cloudpathlib.GSPath):
     For more details, see: https://github.com/drivendataorg/cloudpathlib/issues/390
     """
 
-    def __init__(self, client_path, client=_get_client()):
-        super().__init__(client_path, client=client)
+    def __init__(self, client_path):
+        super().__init__(client_path, client=_gcp_storage_client)

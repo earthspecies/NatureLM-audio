@@ -1,18 +1,16 @@
 [project]
 name = "NatureLM-audio"
-version = "1.0.0"
+version = "1.0.1"
 description = "NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics"
 readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-  "torch==2.2.2", # 📌
+  "torch>=2.2.2", # 📌
   "torchaudio>=2.2.2",
   "torchvision>=0.17.2",
-  "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.2/flash_attn-2.5.2+cu118torch2.2cxx11abiFALSE-cp310-cp310-linux_x86_64.whl",
   "transformers[sentencepiece]>=4.44.2",
   "datasets>=2.20.0",
-  "bitsandbytes>=0.43.1",
   "cloudpathlib[gs]>=0.20.0",
   "einops>=0.8.0",
   "gradio>=5.10.0",
@@ -45,6 +43,10 @@ Homepage = "https://earthspecies.github.io/naturelm-audio-demo/"
 Repository = "https://github.com/earthspecies/NatureLM-audio"
 
 [dependency-groups]
+gpu = [
+  "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.2/flash_attn-2.5.2+cu118torch2.2cxx11abiFALSE-cp310-cp310-linux_x86_64.whl",
+  "bitsandbytes>=0.43.1",
+]
 dev = [
   "pre-commit>=4.0.1",
   "pytest>=7.1.2",
