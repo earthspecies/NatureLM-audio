@@ -291,7 +291,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
     @staticmethod
     def init_audio_Qformer(num_query_token, audio_width, num_hidden_layers=2):
-        encoder_config = BertConfig.from_pretrained("bert-base-uncased", use_auth_token=hf_auth_token)
+        encoder_config = BertConfig.from_pretrained("bert-base-uncased")
         encoder_config.num_hidden_layers = num_hidden_layers
         encoder_config.encoder_width = audio_width
         # insert cross-attention layer every other block
