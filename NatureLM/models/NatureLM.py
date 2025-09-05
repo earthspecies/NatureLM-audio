@@ -64,6 +64,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         max_txt_len: int = 128,
         end_sym: str = "</s>",
         device: str = "cuda",
+        hf_auth_token: str = None,
     ):
         super().__init__()
 
@@ -83,7 +84,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
         logging.info(f"Llama path: {llama_path}")
         logging.info("Loading Llama Tokenizer")
-        self.llama_tokenizer = AutoTokenizer.from_pretrained(llama_path, use_fast=False)
+        self.llama_tokenizer = AutoTokenizer.from_pretrained(llama_path, use_fast=False, use_auth_token=hf_auth_token)
         self.llama_tokenizer.add_special_tokens({"pad_token": "[PAD]"})
         self.llama_tokenizer.padding_side = "right"
 
@@ -91,9 +92,10 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         if device == "cpu":
             self.llama_model = AutoModelForCausalLM.from_pretrained(
                 llama_path,
-                torch_dtype=torch.float32,
+                torch_dtype=torch.float16,
                 attn_implementation="eager",
                 device_map="cpu",
+                use_auth_token=hf_auth_token,
             )
             # An issue with tiny-llama is that pad_token_id was set to -1, but
             # model.save_pretrained checks generation configs and does not allow -1 as
@@ -104,6 +106,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
                 llama_path,
                 torch_dtype=torch.bfloat16,
                 attn_implementation=flash_attn,
+                use_auth_token=hf_auth_token,
             )
 
         self.llama_model.resize_token_embeddings(len(self.llama_tokenizer))
@@ -288,7 +291,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
     @staticmethod
     def init_audio_Qformer(num_query_token, audio_width, num_hidden_layers=2):
-        encoder_config = BertConfig.from_pretrained("bert-base-uncased")
+        encoder_config = BertConfig.from_pretrained("bert-base-uncased", use_auth_token=hf_auth_token)
         encoder_config.num_hidden_layers = num_hidden_layers
         encoder_config.encoder_width = audio_width
         # insert cross-attention layer every other block
