@@ -1,121 +1,289 @@
-# NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics
+# Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models
 
-![](assets/naturelm-audio-overiew.png)
+[![arXiv](https://img.shields.io/badge/arXiv-2405.15653-b31b1b.svg)](arxivlinkhere)
 
-NatureLM-audio is a multimodal audio-language foundation model designed for bioacoustics. It learns from paired audio-text data to solve bioacoustics tasks, such as generating audio-related descriptions, identifying and detecting species, and more. NatureLM-audio was introduced in the paper:
 
-> [NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics](https://openreview.net/forum?id=hJVdwBpWjt)
-> David Robinson, Marius Miron, Masato Hagiwara, Olivier Pietquin
-> ICLR 2025
+This repository contains the official implementation of the paper  
+[*Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models*](arxivlinkhere).  
+This codebase builds on [NatureLM-audio's original codebase](https://github.com/earthspecies/NatureLM-audio).
 
-## Requirements
+<p align="center">
+  <img src="assets/unseen_cmn_family_all_classes_bar_plot.png" width="450"/>
+</p>
 
-- Python 3.10+
-- [uv](https://github.com/astral-sh/uv) (recommended, but optional)
-- Access to [Meta Llama 3.1 8B Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
+## Overview
 
-Make sure you're [authenticated to HuggingFace](https://huggingface.co/docs/huggingface_hub/quick-start#authentication) and that you have been granted access to Llama-3.1 on HuggingFace before proceeding. You can request access from: https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct
+Foundation models for bioacoustics, such as **NatureLM-Audio**, face a critical trade-off between domain specialization and instruction-following ability. While intensive domain fine-tuning achieves strong benchmark results, it limits generalization and flexibility when prompts deviate from training conditions.
+
+We propose a **lightweight model-merging approach** that linearly interpolates NatureLM-Audio with its base language model (**LLaMA-3.1-8B-Instruct**) to restore instruction-following behavior while preserving acoustic expertise.
+
+
+
+### Key Results
+
+* 🔗 **Model merging via LoRA rescaling** - interpolate between base and fine-tuned weights by varying α
+* 🧠 **Instruction-following recovery** - improved compositional generalization across combined prompts
+* 🐋 **Zero-shot species classification** - superior performance on unseen species families
+* ⚙️ **Simple implementation** - fully reproducible on a single A100 GPU
 
 ## Installation
 
-### Using `uv` (recommended)
-Clone the repository and install the dependencies:
+### Prerequisites
+
+- **Python 3.10+**
+- **GPU**: NVIDIA GPU with 24GB+ VRAM (e.g., A100, RTX 3090/4090)
+- **HuggingFace access**: You must be authenticated and have access to [Meta Llama 3.1 8B Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
+- **[uv](https://github.com/astral-sh/uv)** (recommended) - a fast Python package manager
+
+### Authentication Setup
+
+Before proceeding, ensure you're [authenticated to HuggingFace](https://huggingface.co/docs/huggingface_hub/quick-start#authentication):
 
 ```bash
-git clone https://github.com/earthspecies/NatureLM-audio.git
-cd NatureLM-audio
-uv sync
-# If there's no gpu available or you are on MacOS then do
+huggingface-cli login
+```
+
+Request access to LLaMA-3.1 at: https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct
+
+### Install with `uv` (Recommended)
+
+```bash
+git clone https://github.com/emalgorithm/nature-lm-audio-in-context-learning.git
+cd nature-lm-audio-in-context-learning
+
+# With GPU support
+uv sync --group gpu
+
+# Without GPU (CPU only or MacOS)
 uv sync --no-group gpu
 ```
-Project entrypoints are then available with `uv run naturelm`.
 
+All commands can then be run with `uv run beans`.
 
-### Without `uv`
-If you're not using `uv`, you can install the package with pip:
+## Quick Start
 
-**For CPU-only or macOS (without GPU acceleration):**
-```bash
-pip install -e .
-```
-For Linux with CUDA support:
-```bash
-pip install -e .[gpu]
-```
-
-## Run inference on a set of audio files in a folder
-
-```python
-uv run naturelm infer --cfg-path configs/inference.yml --audio-path assets --query "Caption the audio" --window-length-seconds 10.0 --hop-length-seconds 10.0
-```
-This will run inference on all audio files in the `assets` folder, using a window length of 10 seconds and a hop length of 10 seconds. The results will be saved in `inference_output.jsonl`.
-Run `python infer.py --help` for a description of the arguments.
-
-## Run evaluation on BEANS-Zero
-BEANS-Zero is a zero-shot audio+text benchmark for bioacoustics. The repository for the benchmark can be found [here](https://github.com/earthspecies/beans-zero).
-and the dataset is hosted on HuggingFace [here](https://huggingface.co/datasets/EarthSpeciesProject/BEANS-Zero).
-> **NOTE**: One of the tasks in BEANS-Zero requires a java 8 runtime environment. If you don't have it installed, that task will be skipped.
-
-To run evaluation on the BEANS-Zero dataset, you can use the following command:
+After installation, run a basic experiment:
 
 ```bash
-uv run beans --cfg-path configs/inference.yml --data-path "/some/local/path/to/data" --output-path "beans_zero_eval.jsonl"
-```
-**CAUTION**: The BEANS-Zero dataset is large (~ 180GB) and will take a long time to run.
-The predictions will be saved in `beans_zero_eval.jsonl` and the evaluation metrics will be saved in `beans_zero_eval_metrics.jsonl`.
-Run `python beans_zero_inference.py --help` for a description of the arguments.
-
-## Running the inference web app
-
-You can launch the inference app with:
-
-```
-uv run naturelm inference-app --cfg-path configs/inference.yml
+# Run closed-set classification with model merging
+uv run beans \
+  --cfg-path configs/closed_set_classification_2.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/quick_start/"
 ```
 
-This launches a local web app where you can upload an audio file and prompt the NatureLM-audio model.
+The system will automatically:
+1. Download BEANS-Zero dataset (first run only, ~10 minutes)
+2. Download LLaMA-3.1-8B-Instruct model (first run only)
+3. Run inference with multiple LoRA scales
+4. Save results as `.jsonl` files in the output directory
 
-## Instantiating the model from checkpoint
+## Usage
 
-You can load the model directly from the HuggingFace Hub:
+### Basic Command Structure
 
-```py
-from NatureLM.models import NatureLM
-# Download the model from HuggingFace
-model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio")
-model = model.eval().to("cuda")
+All experiments follow this pattern:
+
+```bash
+uv run beans \
+  --cfg-path configs/<config_file>.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/<experiment_name>/"
 ```
-Use it within your code for inference with the Pipline API.
-```py
-from NatureLM.infer import Pipeline
 
-# pass your audios in as file paths or as numpy arrays
-# NOTE: the Pipeline class will automatically load the audio and convert them to numpy arrays
-audio_paths = ["assets/nri-GreenTreeFrogEvergladesNP.mp3"]  # wav, mp3, ogg, flac are supported.
+> **⚠️ Important Notes:**
+> - **First run**: Dataset download and decompression takes ~10 minutes depending on internet speed and hardware
+> - **Model download**: LLaMA-3.1-8B-Instruct will be downloaded automatically on first use
+> - **Storage**: Decompressed files are cached to speed up subsequent runs
+> - **Hardware**: Experiments require ~24GB GPU VRAM (tested on A100)
 
-# Create a list of queries. You may also pass a single query as a string for multiple audios.
-# The same query will be used for all audios.
-queries = ["What is the common name for the focal species in the audio? Answer:"]
+## Reproducing Paper Experiments
 
-pipeline = Pipeline(model=model)
-# NOTE: you can also just do pipeline = Pipeline() which will download the model automatically
+Each configuration file in `configs/` corresponds to one experimental setup from the paper.
 
-# Run the model over the audio in sliding windows of 10 seconds with a hop length of 10 seconds
-results = pipeline(audio_paths, queries, window_length_seconds=10.0, hop_length_seconds=10.0)
-print(results)
-# ['#0.00s - 10.00s#: Green Treefrog\n']
+### Watkins & CBI Experiments
+
+Experiments for figure 2 and 4 of the paper:
+
+```bash
+uv run beans --cfg-path configs/cbi.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/cbi/"
+
+uv run beans --cfg-path configs/watkins.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/watkins/"
 ```
+
+**Generate figures:**
+
+```bash
+uv run python plotting/barplot_watkins_cbi.py
+uv run python plotting/calc_watkins_cbi_metrics.py
+```
+
+### Closed-Set Classification Experiments
+
+Zero-shot classification on unseen species families:
+
+```bash
+uv run beans --cfg-path configs/closed_set_classification_2.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/closed_set_classification_2/"
+
+uv run beans --cfg-path configs/closed_set_classification_all.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/closed_set_classification_all/"
+```
+
+### In-Context Learning Experiments
+
+Evaluating with audio examples:
+
+```bash
+uv run beans --cfg-path configs/in_context_learning_1_example.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/in_context_learning_1_example/"
+
+uv run beans --cfg-path configs/in_context_learning_5_examples.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/in_context_learning_5_examples/"
+```
+
+**Generate analysis figures:**
+
+```bash
+uv run python plotting/calc_unseen_family_cmn_metrics.py
+uv run python plotting/calc_unseen_family_cmn_confusion.py
+uv run python plotting/errorate_breakdown_barplot.py
+uv run python plotting/barplot_unseen_cmn_family.py
+```
+
+### Additional Experiments
+
+```bash
+# Zebra finch individual identification
+uv run beans --cfg-path configs/zf_indiv.yml \
+  --data-path "/path/to/BEANSzero/dataset" \
+  --output-path "results/zf-indiv/"
+```
+
+**Generate figures:**
+
+```bash
+uv run python plotting/zf_indiv.py
+```
+
+---
+
+## Advanced Configuration
+
+All advanced features are implemented through the `extended` section in configuration files (`.yml`).
+These options enable fine-grained control over dataset selection, prompt construction, and LoRA scaling.
+
+### Configuration Options
+
+#### `datasets`
+Select specific datasets for inference instead of using the full BEANS-Zero mix.
+
+**Example:**
+```yaml
+extended:
+  datasets:
+    - watkins
+    - beans_zero
+```
+
+#### `lora_scales`
+Define LoRA interpolation scales (α) to evaluate. Each prompt is tested at all specified scales.
+
+**Example:**
+```yaml
+extended:
+  lora_scales: [0.0, 0.25, 0.5, 0.75, 1.0]
+```
+
+- `α = 0.0`: Pure base model (LLaMA-3.1-8B-Instruct)
+- `α = 1.0`: Pure fine-tuned model (NatureLM-Audio)
+- `0 < α < 1`: Linear interpolation between base and fine-tuned
+
+#### `species`
+Manually select target species to test with names and sound descriptions.
+
+**Example:**
+```yaml
+extended:
+  species:
+    - name: "Spotted Elachura"
+      description: "[bird-like chirping and trilling]"
+    - name: "Dall's Porpoise"
+      description: "[high-pitched clicks and whistles]"
+```
+
+#### `top_k_species`
+Automatically select the top *k* most frequent species from a dataset.
+
+**Note:** Mutually exclusive with `species`. Only one dataset can be selected when using this option.
+
+**Example:**
+```yaml
+extended:
+  top_k_species: 10
+  datasets:
+    - watkins
+```
+
+#### `queries`
+Override BEANS-Zero's default prompts and test multiple custom prompts per sample.
+
+**Supported template flags:**
+- `{species_list}` → Inserts the list of retained species
+- `{examples}` → Inserts name + description pairs from `species`
+- `{audio_examples}` → Inserts name + random audio sample of the named species
+- `{randomize}` → Shuffles the order of species in the above templates
+
+**Example:**
+```yaml
+extended:
+  queries:
+    - "Classify this audio into one of: {species_list}"
+    - "Given these examples: {examples}, identify the species in this audio."
+    - "Which species is this? {randomize}{audio_examples}"
+```
+
+### Example Configuration
+
+See `configs/` folder for complete examples. A typical advanced config looks like:
+
+```yaml
+extended:
+  datasets:
+    - beans_zero
+  lora_scales: [0.0, 0.25, 0.5, 0.75, 1.0]
+  top_k_species: 20
+  queries:
+    - "Identify the species: {species_list}"
+    - "With examples {examples}, classify this audio."
+```
+
 
 ## Citation
 
-If you use NatureLM-audio or build upon it, please cite:
+If you use this work, please cite our paper:
 
 ```bibtex
-@inproceedings{robinson2025naturelm,
-  title     = {NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics},
-  author    = {David Robinson and Marius Miron and Masato Hagiwara and Olivier Pietquin},
-  booktitle = {Proceedings of the International Conference on Learning Representations (ICLR)},
+@inproceedings{marincione2025modelmerging,
+  title     = {Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models},
+  author    = {Davide Marincione and Donato Crisostomi and Roberto Dessi and Emanuele Rodolà and Emanuele Rossi},
+  booktitle = {NeurIPS 2025 Workshop on AI for Animal Communication (AIForAnimalComms)},
   year      = {2025},
-  url       = {https://openreview.net/forum?id=hJVdwBpWjt}
+  url       = {https://openreview.net/forum?id=8YmupGWwvl}
 }
 ```
+
+
+```
+
+## Acknowledgments
+
+This work builds upon the [NatureLM-audio codebase](https://github.com/earthspecies/NatureLM-audio). We thank the original authors for making their code publicly available.

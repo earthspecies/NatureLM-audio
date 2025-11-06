@@ -1,0 +1,83 @@
+model:
+  llama_path: "meta-llama/Meta-Llama-3.1-8B-Instruct"
+
+  freeze_beats: True
+
+  use_audio_Qformer: True
+  max_pooling: False
+  downsample_factor: 8
+  freeze_audio_QFormer: False
+  window_level_Qformer: True
+  num_audio_query_token: 1
+  second_per_window: 0.333333
+  second_stride: 0.333333
+
+  audio_llama_proj_model: ""
+  freeze_audio_llama_proj: False
+
+  lora: True
+  lora_rank: 32
+  lora_alpha: 32
+  lora_dropout: 0.1
+
+  prompt_template: "<|start_header_id|>user<|end_header_id|>\n\n{}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+  max_txt_len: 160
+  end_sym: <|end_of_text|>
+
+  beats_cfg:
+    input_patch_size: 16
+    embed_dim: 512
+    conv_bias: False
+    encoder_layers: 12
+    encoder_embed_dim: 768
+    encoder_ffn_embed_dim: 3072
+    encoder_attention_heads: 12
+    activation_fn: "gelu"
+    layer_wise_gradient_decay_ratio: 0.6
+    layer_norm_first: False
+    deep_norm: True
+    dropout: 0.0
+    attention_dropout: 0.0
+    activation_dropout: 0.0
+    encoder_layerdrop: 0.05
+    dropout_input: 0.0
+    conv_pos: 128
+    conv_pos_groups: 16
+    relative_position_embedding: True
+    num_buckets: 320
+    max_distance: 800
+    gru_rel_pos: True
+    finetuned_model: True
+    predictor_dropout: 0.0
+    predictor_class: 527
+
+generate:
+  max_new_tokens: 100
+  num_beams: 2
+  do_sample: False
+  min_length: 1
+  temperature: 0.1
+  repetition_penalty: 1.0
+  length_penalty: 1.0
+
+extended:
+  datasets:
+    - "watkins"
+
+  queries:
+    - "What is the common name for the focal species in the audio?"
+    - "What is the scientific name for the focal species in the audio?"
+    - "Identify the focal species in the audio and provide its taxonomic name followed by a colon and its common name."
+
+  lora_scales:
+    - 0.0
+    - 0.1
+    - 0.2
+    - 0.3
+    - 0.4
+    - 0.5
+    - 0.6
+    - 0.7
+    - 0.8
+    - 0.9
+    - 1.0

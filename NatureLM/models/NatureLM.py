@@ -123,6 +123,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
                 lora_dropout=lora_dropout,
                 target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
             )
+            self.current_scale = 1.0
             self.llama_model = get_peft_model(self.llama_model, self.peft_config)
             self.llama_embed_tokens = self.llama_model.model.model.embed_tokens
             self.llama_model.print_trainable_parameters()
@@ -612,8 +613,42 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
         return {"loss": loss, "per_example_loss": loss_per_example}
 
+    def set_lora_scale(self, new_scale, adapter_name="default"):
+        """
+        Sets the LoRA scaling for every adapter.
+        
+        Args:
+            new_scale (float): The new scaling factor to apply.
+            adapter_name (str): The name of the adapter to modify.
+        """
+        for module in self.llama_model.modules():
+            # Check if the module is a LoRA layer and has the specified adapter
+            if hasattr(module, 'r') and isinstance(module.r, dict) and adapter_name in module.r:
+                
+                # Get the r and lora_alpha values for the specific adapter
+                r = module.r[adapter_name]
+                lora_alpha = module.lora_alpha[adapter_name]
+                
+                # Calculate and set the new scaling for the specific adapter
+                module.scaling[adapter_name] = new_scale * (lora_alpha / r)
+
+        # Update the tracked scale
+        self.current_scale = new_scale
+
+        # Free cached CUDA memory (only needed for inference)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     @torch.inference_mode()
-    def generate(self, samples, generate_cfg, prompts):
+    def generate(self, samples, generate_cfg, prompts, lora_scale=None):
+
+        # A naive way of setting the lora scale would be to do it in the __init__ when the peft
+        # adapter is initialized, but that would make the lora scale fixed for the model, requiring
+        # us to reload it each time we want to set a new scale.
+        # To avoid that, we do this "hack" and set the lora scale at every generation, via this function.
+        if lora_scale is not None:
+            self.set_lora_scale(lora_scale)
+
         batch_size = len(prompts)
 
         raw_wav = samples["raw_wav"]

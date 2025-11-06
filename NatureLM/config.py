@@ -14,7 +14,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, List, Dict
 
 import yaml
 from pydantic import BaseModel, field_validator
@@ -139,7 +139,6 @@ class GenerateConfig(BaseModel, extra="forbid", validate_assignment=True):
     repetition_penalty: float
     length_penalty: float
 
-
 class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
     llama_path: Path
     beats_path: Path | GSPath | None = None
@@ -193,6 +192,14 @@ class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
     def from_yaml(cls, yaml_file: str | os.PathLike) -> "ModelConfig":
         yaml_values = YamlConfigSettingsSource(cls, yaml_file=str(yaml_file))
         return cls.model_validate(yaml_values())
+    
+class ExtendedConfig(BaseModel, extra="forbid", validate_assignment=True):
+    datasets: List[str] = []
+    queries: List[str] = []
+    lora_scales: List[float] = [1.0]
+    species: List[Dict[str, Any]] = []
+    top_k_species: int = None
+    n_examples: int = 1
 
 
 class Config(BaseSettings, extra="forbid", validate_assignment=True):
@@ -200,6 +207,7 @@ class Config(BaseSettings, extra="forbid", validate_assignment=True):
     run: RunConfig | None = None
     datasets: DatasetsConfig | None = None
     generate: GenerateConfig | None = None
+    extended: ExtendedConfig | None = None
 
     def pretty_print(self):
         print(self.model_dump_json(indent=4))
