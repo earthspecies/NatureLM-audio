@@ -3,9 +3,9 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2405.15653-b31b1b.svg)](arxivlinkhere)
 
 
-This repository contains the official implementation of the paper  
+This repository provides the official code for the paper  
 [*Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models*](arxivlinkhere).  
-This codebase builds on [NatureLM-audio's original codebase](https://github.com/earthspecies/NatureLM-audio).
+It is based on a fork of the [NatureLM-audio original codebase](https://github.com/earthspecies/NatureLM-audio).
 
 <p align="center">
   <img src="assets/unseen_cmn_family_all_classes_bar_plot.png" width="450"/>
@@ -15,7 +15,7 @@ This codebase builds on [NatureLM-audio's original codebase](https://github.com/
 
 Foundation models for bioacoustics, such as **NatureLM-Audio**, face a critical trade-off between domain specialization and instruction-following ability. While intensive domain fine-tuning achieves strong benchmark results, it limits generalization and flexibility when prompts deviate from training conditions.
 
-We propose a **lightweight model-merging approach** that linearly interpolates NatureLM-Audio with its base language model (**LLaMA-3.1-8B-Instruct**) to restore instruction-following behavior while preserving acoustic expertise.
+We propose a **lightweight model-merging approach** that linearly interpolates NatureLM-Audio with its base language model (**LLaMA-3.1-8B-Instruct**) to restore instruction-following behavior while preserving acoustic expertise. This further enables markedly stronger zero-shot generalization, achieving over a 200% relative improvement and setting a new state-of-the-art in closed-set zero-shot classification of unseen species. 
 
 
 
