@@ -59,3 +59,4 @@ generate:
   temperature: 0.1
   repetition_penalty: 1.0
   length_penalty: 1.0
+  merging_alpha: 1.0

@@ -614,6 +614,17 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
     @torch.inference_mode()
     def generate(self, samples, generate_cfg, prompts):
+        # Scale LoRA alpha by merging_alpha at inference time
+        merging_alpha = getattr(generate_cfg, "merging_alpha", 1.0)
+        original_alphas = {}
+        if self.lora and merging_alpha != 1.0:
+            # Store original alpha values to restore later
+            if hasattr(self.llama_model, "peft_config"):
+                for adapter_name, adapter_config in self.llama_model.peft_config.items():
+                    if hasattr(adapter_config, "lora_alpha"):
+                        original_alphas[adapter_name] = adapter_config.lora_alpha
+                        adapter_config.lora_alpha = adapter_config.lora_alpha * merging_alpha
+        
         batch_size = len(prompts)
 
         raw_wav = samples["raw_wav"]
@@ -659,5 +670,12 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
                 # constraints=[constraint] if constraint is not None else None
             )
         text = self.llama_tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+        # Restore original LoRA alpha values
+        if self.lora and merging_alpha != 1.0:
+            if hasattr(self.llama_model, "peft_config") and original_alphas:
+                for adapter_name, original_alpha in original_alphas.items():
+                    if adapter_name in self.llama_model.peft_config:
+                        self.llama_model.peft_config[adapter_name].lora_alpha = original_alpha
 
         return text
