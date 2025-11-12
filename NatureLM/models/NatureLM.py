@@ -612,33 +612,28 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
         return {"loss": loss, "per_example_loss": loss_per_example}
 
-    def model_merging_scaling(self, generate_cfg, adapter_name="default"):
+    def model_merging_scaling(self, merging_alpha, adapter_name="default"):
         """
-        Adjusts the merging scale for adapters as described in
+        Performs model merging with the base model by adjusting the scaling of the LoRA adapters as described in
         "Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models"
         (https://arxiv.org/abs/2511.05171).
 
         Args:
-            generate_cfg: Configuration holding the merging_alpha used for interpolation.
+            merging_alpha: The merging_alpha used for interpolation.
             adapter_name (str): The name of the adapter to rescale when merging.
         """
-        merging_alpha = getattr(generate_cfg, "merging_alpha", 1.0)
 
         for module in self.llama_model.modules():
             # Check if the module is a LoRA layer and has the specified adapter
             if hasattr(module, 'r') and isinstance(module.r, dict) and adapter_name in module.r:
-
-                # Get the r and lora_alpha values for the specific adapter
-                r = module.r[adapter_name]
-                lora_alpha = module.lora_alpha[adapter_name]
-
-                # Calculate and set the new scaling for the specific adapter
-                module.scaling[adapter_name] = merging_alpha * (lora_alpha / r)
+                module.scaling[adapter_name] = merging_alpha * module.scaling[adapter_name]
 
     @torch.inference_mode()
     def generate(self, samples, generate_cfg, prompts):
-        self.model_merging_scaling(generate_cfg)
-        
+        merging_alpha = getattr(generate_cfg, "merging_alpha", 1.0)
+        if merging_alpha != 1.0:
+            self.model_merging_scaling(merging_alpha)
+
         batch_size = len(prompts)
 
         raw_wav = samples["raw_wav"]
