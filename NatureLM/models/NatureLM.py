@@ -618,6 +618,9 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         "Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models"
         (https://arxiv.org/abs/2511.05171).
 
+        The best value for alpha is task- and dataset-specific, but the paper found alpha values between 
+        0.4 and 0.6 to perform generally well.
+
         Args:
             merging_alpha: The merging_alpha used for interpolation.
             adapter_name (str): The name of the adapter to rescale when merging.
