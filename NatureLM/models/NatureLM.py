@@ -612,8 +612,31 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
         return {"loss": loss, "per_example_loss": loss_per_example}
 
+    def model_merging_scaling(self, merging_alpha, adapter_name="default"):
+        """
+        Performs model merging with the base model by adjusting the scaling of the LoRA adapters as described in
+        "Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models"
+        (https://arxiv.org/abs/2511.05171).
+
+        The best value for alpha is task- and dataset-specific, but the paper found alpha values between 
+        0.4 and 0.6 to perform generally well.
+
+        Args:
+            merging_alpha: The merging_alpha used for interpolation.
+            adapter_name (str): The name of the adapter to rescale when merging.
+        """
+
+        for module in self.llama_model.modules():
+            # Check if the module is a LoRA layer and has the specified adapter
+            if hasattr(module, 'r') and isinstance(module.r, dict) and adapter_name in module.r:
+                module.scaling[adapter_name] = merging_alpha * module.scaling[adapter_name]
+
     @torch.inference_mode()
     def generate(self, samples, generate_cfg, prompts):
+        merging_alpha = getattr(generate_cfg, "merging_alpha", 1.0)
+        if merging_alpha != 1.0:
+            self.model_merging_scaling(merging_alpha)
+
         batch_size = len(prompts)
 
         raw_wav = samples["raw_wav"]

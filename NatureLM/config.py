@@ -138,6 +138,7 @@ class GenerateConfig(BaseModel, extra="forbid", validate_assignment=True):
     temperature: float
     repetition_penalty: float
     length_penalty: float
+    merging_alpha: float = 1.0
 
 
 class ModelConfig(BaseModel, extra="forbid", validate_assignment=True):
