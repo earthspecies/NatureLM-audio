@@ -8,6 +8,16 @@ NatureLM-audio is a multimodal audio-language foundation model designed for bioa
 > David Robinson, Marius Miron, Masato Hagiwara, Olivier Pietquin
 > ICLR 2025
 
+## Updates
+**2025-05-11** We've updated the NatureLM-audio Llama model by allowing for a flexible *merge* operation between the original Llama 3.1 8B and the LoRA fine-tuned one from the NatureLM-audio paper. Merging with the original weights better retains the chat and instruction following abilities of the original Llama model which allows for more variation in prompts as described in "Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models" (https://arxiv.org/abs/2511.05171). But this comes at the cost of some performance on bioacoustic tasks.
+
+To use the new merging functionality, you can specify a `merging_alpha` parameter when loading the model from the config file:
+```yaml # configs/inference.yml
+generate:
+  merging_alpha: 0.4  # Interpolate 40% toward base model (60% NaturaLM-audio fine-tuned)
+```
+A good range to try is between 0.4 and 0.6, but the exact value is dataset and task dependent. Read the paper for more details and guidance!
+
 ## Requirements
 
 - Python 3.10+

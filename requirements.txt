@@ -21,7 +21,7 @@ cfgv==3.4.0 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (p
 charset-normalizer==3.3.2 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 click==8.1.8 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 cloudpathlib==0.20.0 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
-colorama==0.4.6 ; (platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows' and sys_platform == 'win32') or (platform_system == 'Windows' and sys_platform != 'darwin' and sys_platform != 'linux')
+colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
 contourpy==1.2.1 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 cycler==0.12.1 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 datasets==3.5.0 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
@@ -124,7 +124,7 @@ python-dateutil==2.9.0.post0 ; (platform_system != 'Darwin' and platform_system 
 python-dotenv==1.0.1 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 python-multipart==0.0.20 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 pytz==2024.1 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
-pywin32==308 ; platform_python_implementation != 'PyPy' and platform_system == 'Windows' and sys_platform != 'darwin' and sys_platform != 'linux'
+pywin32==308 ; platform_python_implementation != 'PyPy' and platform_system == 'Windows'
 pyyaml==6.0 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 rapidfuzz==3.9.4 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
 regex==2024.5.15 ; (platform_system != 'Darwin' and platform_system != 'Linux') or (platform_system == 'Darwin' and sys_platform != 'linux') or (platform_system == 'Linux' and sys_platform != 'darwin')
