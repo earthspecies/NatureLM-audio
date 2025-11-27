@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import hashlib
 import logging
 import os
+from collections import OrderedDict
 from pathlib import Path
 from typing import Literal, Union
 
@@ -35,6 +37,94 @@ from .Qformer import BertConfig, BertLMHeadModel
 from .utils import StoppingCriteriaSub
 
 torch.backends.cuda.matmul.allow_tf32 = True
+
+
+class AudioEncodingCache:
+    """LRU cache for audio encoding with content-based hashing."""
+
+    def __init__(self, capacity: int = 100):
+        self.capacity = capacity
+        self.cache = OrderedDict()
+        self.hits = 0
+        self.misses = 0
+
+    def _compute_hash(self, raw_wav: torch.Tensor, audio_padding_mask: torch.Tensor = None) -> str:
+        """Compute a hash key from the audio tensor and padding mask."""
+        # Use a sample of the tensor for efficiency (first, middle, last portions)
+        B, L = raw_wav.shape
+        sample_size = min(1000, L)  # Sample 1000 points or entire length if smaller
+
+        # Sample from beginning, middle, and end
+        indices = torch.cat(
+            [
+                torch.arange(min(sample_size // 3, L)),
+                torch.arange(L // 2, min(L // 2 + sample_size // 3, L)),
+                torch.arange(max(0, L - sample_size // 3), L),
+            ]
+        )
+
+        sampled_wav = raw_wav[:, indices].cpu().numpy().tobytes()
+
+        # Create hash from audio data, shape, and padding mask presence
+        hash_obj = hashlib.sha256(sampled_wav)
+        hash_obj.update(str(raw_wav.shape).encode())
+        hash_obj.update(str(raw_wav.dtype).encode())
+
+        if audio_padding_mask is not None:
+            mask_sample = audio_padding_mask[:, indices].cpu().numpy().tobytes()
+            hash_obj.update(mask_sample)
+            hash_obj.update(str(audio_padding_mask.shape).encode())
+        else:
+            hash_obj.update(b"no_mask")
+
+        return hash_obj.hexdigest()
+
+    def get(self, raw_wav: torch.Tensor, audio_padding_mask: torch.Tensor = None):
+        """Retrieve cached encoding if available."""
+        key = self._compute_hash(raw_wav, audio_padding_mask)
+
+        if key in self.cache:
+            self.hits += 1
+            # Move to end (most recently used)
+            self.cache.move_to_end(key)
+            return self.cache[key]
+
+        self.misses += 1
+        return None
+
+    def put(self, raw_wav: torch.Tensor, audio_padding_mask: torch.Tensor, value: tuple):
+        """Store encoding in cache (on CPU to save GPU memory)."""
+        key = self._compute_hash(raw_wav, audio_padding_mask)
+
+        # Move tensors to CPU for storage
+        audio_embeds, audio_atts = value
+        cached_value = (audio_embeds.cpu(), audio_atts.cpu())
+
+        # Add to cache
+        self.cache[key] = cached_value
+        self.cache.move_to_end(key)
+
+        # Evict oldest if over capacity
+        if len(self.cache) > self.capacity:
+            self.cache.popitem(last=False)
+
+    def clear(self):
+        """Clear the cache."""
+        self.cache.clear()
+        self.hits = 0
+        self.misses = 0
+
+    def get_stats(self):
+        """Get cache statistics."""
+        total = self.hits + self.misses
+        hit_rate = self.hits / total if total > 0 else 0
+        return {
+            "hits": self.hits,
+            "misses": self.misses,
+            "hit_rate": hit_rate,
+            "size": len(self.cache),
+            "capacity": self.capacity,
+        }
 
 
 class NatureLM(nn.Module, PyTorchModelHubMixin):
@@ -64,8 +154,13 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         max_txt_len: int = 128,
         end_sym: str = "</s>",
         device: str = "cuda",
+        audio_encoding_cache_size: int = 100,
     ):
         super().__init__()
+
+        self.audio_encoding_cache = (
+            AudioEncodingCache(capacity=audio_encoding_cache_size) if audio_encoding_cache_size > 0 else None
+        )
 
         self.beats_path = beats_path
         self.beats_cfg = beats_cfg
@@ -387,9 +482,30 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         return audio_embeds, audio_atts
 
     def encode_audio(self, raw_wav, audio_padding_mask=None):
+        # Only use cache during inference (not training)
+        if self.audio_encoding_cache is not None and not self.training:
+            cached_result = self.audio_encoding_cache.get(raw_wav, audio_padding_mask)
+            if cached_result is not None:
+                print("#### Audio encoding cache hit ####")
+                # Move cached tensors back to the model's device
+                audio_embeds, audio_atts = cached_result
+                return audio_embeds.to(self.device), audio_atts.to(self.device)
+
+        # Compute encoding if not cached
         with torch.autocast(self.device.type, dtype=torch.bfloat16):
             audio_embeds, audio_pad_mask = self.beats(raw_wav, padding_mask=audio_padding_mask)
-            return self._encode_auditory_feature(audio_embeds=audio_embeds, audio_pad_mask=audio_pad_mask)
+            result = self._encode_auditory_feature(audio_embeds=audio_embeds, audio_pad_mask=audio_pad_mask)
+
+        # Store in cache if enabled and in inference mode
+        if self.audio_encoding_cache is not None and not self.training:
+            self.audio_encoding_cache.put(raw_wav, audio_padding_mask, result)
+
+        return result
+
+    def clear_cache(self):
+        """Clear the audio encoding cache."""
+        if self.audio_encoding_cache is not None:
+            self.audio_encoding_cache.clear()
 
     def prompt_wrap(self, audio_embeds, audio_atts, prompt: list[str]):
         """Merge audio embeddings with embeddings of the tokens in the prompt.
@@ -618,7 +734,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
         "Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models"
         (https://arxiv.org/abs/2511.05171).
 
-        The best value for alpha is task- and dataset-specific, but the paper found alpha values between 
+        The best value for alpha is task- and dataset-specific, but the paper found alpha values between
         0.4 and 0.6 to perform generally well.
 
         Args:
@@ -628,7 +744,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
         for module in self.llama_model.modules():
             # Check if the module is a LoRA layer and has the specified adapter
-            if hasattr(module, 'r') and isinstance(module.r, dict) and adapter_name in module.r:
+            if hasattr(module, "r") and isinstance(module.r, dict) and adapter_name in module.r:
                 module.scaling[adapter_name] = merging_alpha * module.scaling[adapter_name]
 
     @torch.inference_mode()
