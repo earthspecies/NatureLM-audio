@@ -502,7 +502,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
 
         return result
 
-    def clear_cache(self):
+    def clear_audio_embed_cache(self):
         """Clear the audio encoding cache."""
         if self.audio_encoding_cache is not None:
             self.audio_encoding_cache.clear()
@@ -748,7 +748,7 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
                 module.scaling[adapter_name] = merging_alpha * module.scaling[adapter_name]
 
     @torch.inference_mode()
-    def generate(self, samples, generate_cfg, prompts):
+    def generate(self, samples, generate_cfg, prompts) -> list[str]:
         merging_alpha = getattr(generate_cfg, "merging_alpha", 1.0)
         if merging_alpha != 1.0:
             self.model_merging_scaling(merging_alpha)

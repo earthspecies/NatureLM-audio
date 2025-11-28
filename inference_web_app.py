@@ -17,7 +17,9 @@ MODEL: NatureLM = None
 
 def prompt_lm(audios: list[str], messages: list[dict[str, str]]):
     cuda_enabled = torch.cuda.is_available()
+
     samples = prepare_sample_waveforms(audios, cuda_enabled)
+
     prompt_text = MODEL.llama_tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     ).removeprefix(MODEL.llama_tokenizer.bos_token)
@@ -112,7 +114,12 @@ def _chat_tab(examples):
     )
 
     bot_msg.then(lambda: gr.ClearButton(visible=True), None, [clear_button])
-    clear_button.click(lambda: gr.ClearButton(visible=False), None, [clear_button])
+
+    def clear_all_caches():
+        """Clear both the audio file cache and model's encoding cache."""
+        MODEL.clear_audio_embed_cache()
+
+    clear_button.click(lambda: gr.ClearButton(visible=False), None, [clear_button]).then(clear_all_caches, None, None)
 
     gr.Examples(
         list(examples.values()),
@@ -267,14 +274,15 @@ def main(
     cfg_path: str | Path,
     options: list[str] = [],
     device: str = "cuda:0",
+    merging_alpha: float = 1.0,
 ):
     cfg = Config.from_sources(yaml_file=cfg_path, cli_args=options)
-    cfg.generate.merging_alpha = 0.6
+    cfg.generate.merging_alpha = merging_alpha
     model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio", force_download=False)
     model.to(device)
     model.eval()
 
-    global MODEL, CONFIG
+    global MODEL, CONFIG, AUDIO_CACHE
     MODEL = model
     CONFIG = cfg
 
