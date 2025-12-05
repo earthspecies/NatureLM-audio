@@ -48,9 +48,22 @@ class AudioEncodingCache:
         self.hits = 0
         self.misses = 0
 
-    def _compute_hash(self, raw_wav: torch.Tensor, audio_padding_mask: torch.Tensor = None) -> str:
-        """Compute a hash key from the audio tensor and padding mask."""
+    def _compute_hash(self, raw_wav: torch.Tensor, audio_padding_mask: torch.Tensor | None = None) -> str:
+        """Compute a hash key from the audio tensor and padding mask.
+        Will compute a hash for a batch of audio tensors.
+        The batch dim is assumed to be the first dim.
+
+        Args:
+            raw_wav (torch.Tensor): Audio tensor of shape (B, L).
+            audio_padding_mask (torch.Tensor, optional): Padding mask tensor of shape (B, L). Defaults to None.
+
+        Returns:
+            str: Hash key representing the audio content and shape.
+        """
         # Use a sample of the tensor for efficiency (first, middle, last portions)
+        assert raw_wav.ndim == 2, "raw_wav must be a 2D tensor (B, L)"
+        assert raw_wav.shape[1] > raw_wav.shape[0], "raw_wav length must be greater than batch size"
+
         B, L = raw_wav.shape
         sample_size = min(1000, L)  # Sample 1000 points or entire length if smaller
 
@@ -113,18 +126,6 @@ class AudioEncodingCache:
         self.cache.clear()
         self.hits = 0
         self.misses = 0
-
-    def get_stats(self):
-        """Get cache statistics."""
-        total = self.hits + self.misses
-        hit_rate = self.hits / total if total > 0 else 0
-        return {
-            "hits": self.hits,
-            "misses": self.misses,
-            "hit_rate": hit_rate,
-            "size": len(self.cache),
-            "capacity": self.capacity,
-        }
 
 
 class NatureLM(nn.Module, PyTorchModelHubMixin):
