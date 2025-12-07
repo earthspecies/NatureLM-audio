@@ -17,7 +17,9 @@ MODEL: NatureLM = None
 
 def prompt_lm(audios: list[str], messages: list[dict[str, str]]):
     cuda_enabled = torch.cuda.is_available()
+
     samples = prepare_sample_waveforms(audios, cuda_enabled)
+
     prompt_text = MODEL.llama_tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     ).removeprefix(MODEL.llama_tokenizer.bos_token)
@@ -29,7 +31,7 @@ def prompt_lm(audios: list[str], messages: list[dict[str, str]]):
     )  # exclude the system header from the prompt
     prompt_text = re.sub("\\n", r"\\n", prompt_text)  # FIXME this is a hack to fix the issue #34
 
-    print(f"{prompt_text=}")
+    # print(f"{prompt_text=}")
     with torch.cuda.amp.autocast(dtype=torch.float16):
         llm_answer = MODEL.generate(samples, CONFIG.generate, prompts=[prompt_text])
     return llm_answer[0]
@@ -63,7 +65,6 @@ def combine_model_inputs(msgs: list[dict[str, str]]) -> dict[str, list[str]]:
     messages = []
     files = []
     for msg in msgs:
-        print(msg, messages, files)
         match msg:
             case {"content": (path,)}:
                 messages.append({"role": msg["role"], "content": "<Audio><AudioHere></Audio> "})
@@ -78,11 +79,11 @@ def combine_model_inputs(msgs: list[dict[str, str]]) -> dict[str, list[str]]:
         else:
             joined_messages.append(msg)
 
+    print(f"Combined messages: {joined_messages}\n\n")
     return {"messages": joined_messages, "files": files}
 
 
 def bot_response(history: list):
-    print(type(history))
     combined_inputs = combine_model_inputs(history)
     response = prompt_lm(combined_inputs["files"], combined_inputs["messages"])
     history.append({"role": "assistant", "content": response})
@@ -100,7 +101,6 @@ def _chat_tab(examples):
         # editable="user",  # disable because of https://github.com/gradio-app/gradio/issues/10320
         resizeable=True,
     )
-
     chat_input = _multimodal_textbox_factory()
     send_all = gr.Button("Send all", elem_id="send-all")
     clear_button = gr.ClearButton(components=[chatbot, chat_input], visible=False)
@@ -114,7 +114,12 @@ def _chat_tab(examples):
     )
 
     bot_msg.then(lambda: gr.ClearButton(visible=True), None, [clear_button])
-    clear_button.click(lambda: gr.ClearButton(visible=False), None, [clear_button])
+
+    def clear_all_caches():
+        """Clear both the audio file cache and model's encoding cache."""
+        MODEL.clear_audio_embed_cache()
+
+    clear_button.click(lambda: gr.ClearButton(visible=False), None, [clear_button]).then(clear_all_caches, None, None)
 
     gr.Examples(
         list(examples.values()),
@@ -269,13 +274,15 @@ def main(
     cfg_path: str | Path,
     options: list[str] = [],
     device: str = "cuda:0",
+    merging_alpha: float = 1.0,
 ):
     cfg = Config.from_sources(yaml_file=cfg_path, cli_args=options)
-    model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio", force_download=True)
+    cfg.generate.merging_alpha = merging_alpha
+    model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio", force_download=False)
     model.to(device)
     model.eval()
 
-    global MODEL, CONFIG
+    global MODEL, CONFIG, AUDIO_CACHE
     MODEL = model
     CONFIG = cfg
 
@@ -322,7 +329,7 @@ def main(
 
     app.launch(
         server_port=port,
-        server_name="0.0.0.0",
+        server_name="localhost",  # "0.0.0.0",
         auth=None,
         show_error=show_errors,
         favicon_path=str(assets_dir / "esp_favicon.png"),

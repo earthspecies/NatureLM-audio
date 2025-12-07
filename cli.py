@@ -65,7 +65,7 @@ def train(cfg_path, options):
 @click.option("--output-path", default="inference_output.jsonl", type=Path, help="Output path for the results")
 @click.option("--window-length-seconds", default=10.0, type=float, help="Length of the sliding window in seconds")
 @click.option("--hop-length-seconds", default=10.0, type=float, help="Hop length for the sliding window in seconds")
-def infer(cfg_path, audio_path, query, output_path, window_length_seconds, hop_length_seconds):
+def infer(cfg_path, audio_path, query, output_path, window_length_seconds, hop_length_seconds, merging_alpha):
     infer_fn(
         cfg_path=cfg_path,
         audio_path=audio_path,
@@ -82,7 +82,8 @@ def infer(cfg_path, audio_path, query, output_path, window_length_seconds, hop_l
 @click.option("--port", default=5001, type=int)
 @click.option("--assets-dir", type=Path, default=Path("assets"), help="Path to the directory with static files")
 @click.option("--show-errors", type=bool, default=False, help="Show error messages in the web interface")
-def inference_app(cfg_path, options, device, port, assets_dir, show_errors):
+@click.option("--merging-alpha", type=float, default=0.6, help="Alpha value for merging audio segments")
+def inference_app(cfg_path, options, device, port, assets_dir, show_errors, merging_alpha):
     app_fn(
         cfg_path=cfg_path,
         options=options,
@@ -90,6 +91,7 @@ def inference_app(cfg_path, options, device, port, assets_dir, show_errors):
         port=port,
         assets_dir=assets_dir,
         show_errors=show_errors,
+        merging_alpha=merging_alpha,
     )
 
 
