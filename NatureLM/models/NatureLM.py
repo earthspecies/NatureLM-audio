@@ -743,10 +743,17 @@ class NatureLM(nn.Module, PyTorchModelHubMixin):
             adapter_name (str): The name of the adapter to rescale when merging.
         """
 
-        for module in self.llama_model.modules():
-            # Check if the module is a LoRA layer and has the specified adapter
-            if hasattr(module, "r") and isinstance(module.r, dict) and adapter_name in module.r:
-                module.scaling[adapter_name] = merging_alpha * module.scaling[adapter_name]
+        # Store original scaling on first call, then always scale relative to original
+        if not hasattr(self, "_original_lora_scaling"):
+            self._original_lora_scaling = {}
+            for name, module in self.llama_model.named_modules():
+                if hasattr(module, "r") and isinstance(module.r, dict) and adapter_name in module.r:
+                    self._original_lora_scaling[name] = module.scaling[adapter_name]
+
+        for name, module in self.llama_model.named_modules():
+            if name in self._original_lora_scaling:
+                module.scaling[adapter_name] = merging_alpha * self._original_lora_scaling[name]
+
 
     @torch.inference_mode()
     def generate(self, samples, generate_cfg, prompts) -> list[str]:
