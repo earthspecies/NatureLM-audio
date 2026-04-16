@@ -237,6 +237,7 @@ def main(
     output_path: str,
     window_length_seconds: float,
     hop_length_seconds: float,
+    merging_alpha: float = 1.0,
 ) -> None:
     """Main function to run the NatureLM-audio inference script.
     It takes command line arguments for audio file path, query, output path,
@@ -250,6 +251,7 @@ def main(
         output_path (str): Path to save the output results.
         window_length_seconds (float): Length of the sliding window in seconds.
         hop_length_seconds (float): Hop length for the sliding window in seconds.
+        merging_alpha (float): Alpha value for merging audio segments. Defaults to 1.0.
 
     Raises:
         ValueError: If the audio file path is invalid or if the query is empty.
@@ -282,6 +284,9 @@ def main(
 
     # Load model and config
     model, cfg = load_model_and_config(cfg_path)
+
+    # Override merging_alpha from command line
+    cfg.generate.merging_alpha = merging_alpha
 
     # Load audio processor
     processor = NatureLMAudioProcessor(sample_rate=_SAMPLE_RATE, max_length_seconds=_MAX_LENGTH_SECONDS)

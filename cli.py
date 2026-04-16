@@ -65,6 +65,7 @@ def train(cfg_path, options):
 @click.option("--output-path", default="inference_output.jsonl", type=Path, help="Output path for the results")
 @click.option("--window-length-seconds", default=10.0, type=float, help="Length of the sliding window in seconds")
 @click.option("--hop-length-seconds", default=10.0, type=float, help="Hop length for the sliding window in seconds")
+@click.option("--merging-alpha", default=1.0, type=float, help="Alpha value for merging audio segments")
 def infer(cfg_path, audio_path, query, output_path, window_length_seconds, hop_length_seconds, merging_alpha):
     infer_fn(
         cfg_path=cfg_path,
@@ -73,6 +74,7 @@ def infer(cfg_path, audio_path, query, output_path, window_length_seconds, hop_l
         output_path=output_path,
         window_length_seconds=window_length_seconds,
         hop_length_seconds=hop_length_seconds,
+        merging_alpha=merging_alpha,
     )
 
 
