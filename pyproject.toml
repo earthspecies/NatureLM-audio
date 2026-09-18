@@ -68,6 +68,15 @@ allow-direct-references = true
 naturelm = "cli:naturelm"
 beans = "cli:beans_zero"
 
+[tool.uv]
+# setuptools 82.0.0 removed pkg_resources, which librosa 0.9.2 imports at module
+# load time -- without this cap, importing NatureLM fails outright. 81.x still
+# clears CVE-2025-47273 (path traversal, fixed in 78.1.1).
+# CVE-2026-59890 (needs 83.0.0) stays open but is not reachable: it affects
+# sdist builds via MANIFEST.in, and this project builds with hatchling.
+# Revisit once librosa is bumped past 0.9.2, which drops the pkg_resources import.
+constraint-dependencies = ["setuptools>=78.1.1,<82"]
+
 [[tool.uv.index]]
 name = "pytorch-cu118"
 url = "https://download.pytorch.org/whl/cu118"
