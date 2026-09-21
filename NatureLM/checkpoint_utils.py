@@ -104,3 +104,112 @@ def save_model_checkpoint(
         torch_save_to_bucket(save_obj, save_path)
     else:
         torch.save(save_obj, save_path)
+
+
+# Classes that a NatureLM training checkpoint saved before configs were stored as JSON can
+# legitimately contain under "config". All are plain value types: none is callable, and
+# GSPath pickles without its GCS client or any credentials. Anything outside this set means
+# the file is not one of ours, and conversion refuses it.
+_LEGACY_CONFIG_GLOBALS = (
+    "NatureLM.config.AugmentationsConfig",
+    "NatureLM.config.BeatsConfig",
+    "NatureLM.config.Config",
+    "NatureLM.config.DatasetsConfig",
+    "NatureLM.config.GenerateConfig",
+    "NatureLM.config.ModelConfig",
+    "NatureLM.config.OptimizerConfig",
+    "NatureLM.config.RunConfig",
+    "NatureLM.storage_utils.GSPath",
+    "pathlib.PosixPath",
+    "pathlib.PurePosixPath",
+    "pathlib.WindowsPath",
+    "pathlib.PureWindowsPath",
+    "urlparse.ParseResult",
+    "urllib.parse.ParseResult",
+)
+
+# Pickle records some classes under a module path that no longer exists: ParseResult is a
+# namedtuple pickled as "urlparse.ParseResult", but lives in urllib.parse on Python 3.
+_LEGACY_GLOBAL_ALIASES = {"urlparse.ParseResult": "urllib.parse.ParseResult"}
+
+
+def convert_legacy_checkpoint(
+    input_path: Union[str, os.PathLike], output_path: Union[str, os.PathLike]
+) -> dict[str, Any]:
+    """Rewrite a pre-JSON-config checkpoint so it loads under torch.load(weights_only=True).
+
+    Only the "config" entry changes: pickled pydantic objects become plain JSON types.
+    Tensors are re-saved untouched.
+
+    The unpickling allowlist is limited to _LEGACY_CONFIG_GLOBALS, so a tampered file cannot
+    execute code during conversion -- if it references anything else, we refuse before
+    reading it.
+
+    Args:
+        input_path: The legacy checkpoint. Local paths and gs:// URIs both work.
+        output_path: Where to write the converted checkpoint.
+
+    Returns:
+        The converted checkpoint dict.
+
+    Raises:
+        ValueError: If the file references globals outside the allowlist.
+    """
+    import importlib
+
+    from NatureLM.utils import universal_torch_load
+
+    unsafe = set(torch.serialization.get_unsafe_globals_in_checkpoint(os.fspath(input_path)))
+    unexpected = sorted(unsafe - set(_LEGACY_CONFIG_GLOBALS))
+    if unexpected:
+        raise ValueError(
+            f"{input_path} references globals that a NatureLM checkpoint should not contain: "
+            f"{unexpected}. Refusing to convert; this file may be tampered with."
+        )
+
+    # Pair each class with the name the pickle actually records, so torch matches it even
+    # when the recorded module path differs from where the class lives today.
+    allowed = []
+    for name in sorted(unsafe):
+        module, _, attr = _LEGACY_GLOBAL_ALIASES.get(name, name).rpartition(".")
+        try:
+            allowed.append((getattr(importlib.import_module(module), attr), name))
+        except (ImportError, AttributeError) as e:
+            raise ValueError(f"Cannot resolve {name} referenced by {input_path}: {e}") from e
+
+    # Unpickling bypasses __init__, so GSPath instances have no _handle and their __del__
+    # raises at collection. A class-level default makes that a no-op.
+    had_handle = hasattr(GSPath, "_handle")
+    GSPath._handle = None
+    try:
+        with torch.serialization.safe_globals(allowed):
+            ckpt = universal_torch_load(input_path, cache_mode="use", map_location="cpu")
+    finally:
+        if not had_handle:
+            del GSPath._handle
+
+    config = ckpt.get("config")
+    if config is None:
+        logger.warning("%s has no 'config' entry; re-saving unchanged", input_path)
+    else:
+        ckpt["config"] = _config_to_json(config)
+
+    if is_gcs_path(output_path):
+        torch_save_to_bucket(ckpt, output_path)
+    else:
+        torch.save(ckpt, output_path)
+    logger.info("Converted %s -> %s", input_path, output_path)
+    return ckpt
+
+
+def _config_to_json(config: Any) -> Any:
+    """Recursively reduce pydantic models, Paths and GSPaths to JSON-compatible values."""
+    if hasattr(config, "model_dump"):
+        return config.model_dump(mode="json")
+    if isinstance(config, dict):
+        return {k: _config_to_json(v) for k, v in config.items()}
+    if isinstance(config, (list, tuple)):
+        return [_config_to_json(v) for v in config]
+    if isinstance(config, (os.PathLike, GSPath)):
+        return str(config)
+    return config

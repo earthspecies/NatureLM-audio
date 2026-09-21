@@ -14,6 +14,7 @@
 
 import logging
 import os
+import pickle
 import time
 from datetime import datetime
 from pathlib import Path
@@ -340,6 +341,10 @@ def prepare_samples_for_detection(samples, prompt, label):
     return samples
 
 
+class UnsupportedCheckpointError(RuntimeError):
+    """Raised when a checkpoint cannot be loaded under torch.load(weights_only=True)."""
+
+
 def universal_torch_load(
     f: str | os.PathLike,
     *,
@@ -403,4 +408,36 @@ def universal_torch_load(
             raise FileNotFoundError(f"File does not exist: {f}")
 
     with open(f, "rb") as opened_file:
+        return _load_checkpoint(opened_file, f, **kwargs)
+
+
+def _load_checkpoint(opened_file, source, **kwargs) -> Any:
+    """Deserialize a checkpoint, refusing anything torch.load(weights_only=True) rejects.
+
+    torch>=2.6 defaults torch.load to weights_only=True, which reconstructs only tensors,
+    primitive containers and explicitly allowlisted classes. That default is what closes
+    CVE-2025-32434, where a crafted checkpoint executes arbitrary code on load.
+
+    Loads cleanly: BEATs checkpoints, and anything Runner.save_checkpoint writes now that
+    it stores the config as JSON.
+
+    Rejected: checkpoints written by Runner.save_checkpoint before that change, which
+    pickled pydantic config objects under "config". Convert those once with
+    `naturelm convert-checkpoint`; we deliberately do not unpickle them here, because a
+    fallback that relaxes weights_only on failure is exactly the hole this default closes
+    -- an attacker controls whether the first attempt fails.
+    """
+    try:
         return torch.load(opened_file, **kwargs)
+    except pickle.UnpicklingError as e:
+        if "weights_only" not in str(e) and "Unsupported global" not in str(e):
+            raise
+        raise UnsupportedCheckpointError(
+            f"Refusing to load {source}: it stores Python objects that torch.load rejects "
+            f"under weights_only=True.\n"
+            f"If this is a NatureLM training checkpoint saved before configs were stored as "
+            f"JSON, convert it once:\n"
+            f"    naturelm convert-checkpoint --input {source} --output <converted.pth>\n"
+            f"If it came from anywhere you do not control, do not convert it.\n"
+            f"Original error: {e}"
+        ) from e
