@@ -6,9 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 dependencies = [
-  "torch>=2.2.2", # 📌
-  "torchaudio>=2.2.2",
-  "torchvision>=0.17.2",
+  "torch>=2.6.0,<2.7", # 📌 2.6.0 fixes CVE-2025-32434 (torch.load RCE)
+  "torchaudio>=2.6.0,<2.7",
+  "torchvision>=0.21.0,<0.22",
   "transformers[sentencepiece]>=4.44.2",
   "datasets>=2.20.0",
   "cloudpathlib[gs]>=0.20.0",
@@ -16,7 +16,7 @@ dependencies = [
   "gradio>=5.10.0",
   "google-cloud-aiplatform>=1.76.0",
   "Levenshtein>=0.25.1",
-  "librosa>=0.9.2",
+  "librosa>=0.11.0,<1.0",
   "memoization>=0.4.0",
   "mir-eval>=0.7",
   "numpy>=1.26.4",
@@ -27,7 +27,7 @@ dependencies = [
   "pydantic>=2.7.4",
   "pydub>=0.25.1",
   "pyyaml>=6.0",
-  "resampy>=0.3.1",
+  "resampy>=0.4.3",
   "scipy>=1.14.0",
   "soundfile>=0.12.1",
   "tensorboard>=2.18.0",
@@ -44,8 +44,8 @@ Repository = "https://github.com/earthspecies/NatureLM-audio"
 
 [dependency-groups]
 gpu = [
-  "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.2/flash_attn-2.5.2+cu118torch2.2cxx11abiFALSE-cp310-cp310-linux_x86_64.whl",
-  "bitsandbytes>=0.43.1",
+  "flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3.post1/flash_attn-2.8.3.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "bitsandbytes>=0.45.0",
 ]
 dev = [
   "pre-commit>=4.0.1",
@@ -68,18 +68,44 @@ allow-direct-references = true
 naturelm = "cli:naturelm"
 beans = "cli:beans_zero"
 
-[tool.uv]
-# setuptools 82.0.0 removed pkg_resources, which librosa 0.9.2 imports at module
-# load time -- without this cap, importing NatureLM fails outright. 81.x still
-# clears CVE-2025-47273 (path traversal, fixed in 78.1.1).
-# CVE-2026-59890 (needs 83.0.0) stays open but is not reachable: it affects
-# sdist builds via MANIFEST.in, and this project builds with hatchling.
-# Revisit once librosa is bumped past 0.9.2, which drops the pkg_resources import.
-constraint-dependencies = ["setuptools>=78.1.1,<82"]
+[[tool.uv.dependency-metadata]]
+# PyTorch's index serves wheels whose metadata differ by platform: the Linux
+# aarch64 torch+cu126 wheel declares no nvidia-*/triton dependencies, and uv's
+# universal resolver reads a single wheel's metadata per version. Without this
+# override the lock silently drops the whole CUDA runtime for Linux x86_64.
+# Copied verbatim from the cp310 manylinux_2_28_x86_64 wheel's METADATA.
+name = "torch"
+version = "2.6.0+cu126"
+requires-python = ">=3.9.0"
+requires-dist = [
+  "filelock",
+  "typing-extensions>=4.10.0",
+  "setuptools; python_version >= '3.12'",
+  "sympy==1.13.1; python_version >= '3.9'",
+  "networkx",
+  "jinja2",
+  "fsspec",
+  "nvidia-cuda-nvrtc-cu12==12.6.77; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cuda-runtime-cu12==12.6.77; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cuda-cupti-cu12==12.6.80; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cudnn-cu12==9.5.1.17; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cublas-cu12==12.6.4.1; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cufft-cu12==11.3.0.4; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-curand-cu12==10.3.7.77; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cusolver-cu12==11.7.1.2; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cusparse-cu12==12.5.4.2; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-cusparselt-cu12==0.6.3; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-nccl-cu12==2.21.5; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-nvtx-cu12==12.6.77; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "nvidia-nvjitlink-cu12==12.6.85; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "triton==3.2.0; platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "optree>=0.13.0; extra == 'optree'",
+  "opt-einsum>=3.3; extra == 'opt-einsum'",
+]
 
 [[tool.uv.index]]
-name = "pytorch-cu118"
-url = "https://download.pytorch.org/whl/cu118"
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
 [[tool.uv.index]]
@@ -90,15 +116,15 @@ explicit = true
 [tool.uv.sources]
 torch = [
   { index = "pytorch-cpu", marker = "platform_system == 'Darwin'" },
-  { index = "pytorch-cu118", marker = "platform_system == 'Linux'" },
+  { index = "pytorch-cu126", marker = "platform_system == 'Linux'" },
 ]
 torchvision = [
   { index = "pytorch-cpu", marker = "platform_system == 'Darwin'" },
-  { index = "pytorch-cu118", marker = "platform_system == 'Linux'" },
+  { index = "pytorch-cu126", marker = "platform_system == 'Linux'" },
 ]
 torchaudio = [
   { index = "pytorch-cpu", marker = "platform_system == 'Darwin'" },
-  { index = "pytorch-cu118", marker = "platform_system == 'Linux'" },
+  { index = "pytorch-cu126", marker = "platform_system == 'Linux'" },
 ]
 beans-zero = { git = "https://git@github.com/earthspecies/beans-zero.git" }
 
