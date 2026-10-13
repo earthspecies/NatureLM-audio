@@ -503,7 +503,8 @@ class Runner:
         save_obj = {
             "model": state_dict,
             "optimizer": self.optimizer.state_dict(),
-            "config": dict(self.config),
+            # Plain JSON types so the checkpoint loads under torch.load(weights_only=True).
+            "config": self.config.model_dump(mode="json"),
             "scaler": self.scaler.state_dict() if self.scaler else None,
             "epoch": cur_epoch,
         }

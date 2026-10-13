@@ -82,7 +82,7 @@ class EmbeddingEMA(nn.Module):
             self.register_buffer("initted", torch.Tensor([not kmeans_init]))
         else:
             print(f"load init codebook weight from {codebook_init_path}")
-            codebook_ckpt_weight = torch.load(codebook_init_path, map_location="cpu")
+            codebook_ckpt_weight = torch.load(codebook_init_path, map_location="cpu", weights_only=True)
             weight = codebook_ckpt_weight.clone()
             self.register_buffer("initted", torch.Tensor([True]))
 

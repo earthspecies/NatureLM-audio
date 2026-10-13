@@ -97,5 +97,20 @@ def inference_app(cfg_path, options, device, port, assets_dir, show_errors, merg
     )
 
 
+@naturelm.command("convert-checkpoint")
+@click.option("--input", "input_path", required=True, type=str, help="Legacy checkpoint (local path or gs:// URI)")
+@click.option("--output", "output_path", required=True, type=str, help="Where to write the converted checkpoint")
+def convert_checkpoint(input_path, output_path):
+    """Rewrite a pre-JSON-config checkpoint so it loads under torch.load(weights_only=True).
+
+    Only convert checkpoints you produced yourself. Conversion refuses any file referencing
+    globals outside NatureLM's own config classes.
+    """
+    from NatureLM.checkpoint_utils import convert_legacy_checkpoint
+
+    convert_legacy_checkpoint(input_path, output_path)
+    click.echo(f"Converted {input_path} -> {output_path}")
+
+
 if __name__ == "__main__":
     naturelm()
