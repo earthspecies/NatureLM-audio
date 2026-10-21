@@ -8,6 +8,8 @@ NatureLM-audio is a multimodal audio-language foundation model designed for bioa
 > David Robinson, Marius Miron, Masato Hagiwara, Olivier Pietquin
 > ICLR 2025
 
+📖 **Documentation:** https://projects.earthspecies.org/naturelm-audio/latest/index.html
+
 ## Updates
 **2025-05-27** We've updated the NatureLM-audio Llama model by allowing for a flexible *merge* operation between the original Llama 3.1 8B and the LoRA fine-tuned one from the NatureLM-audio paper. Merging with the original weights better retains the chat and instruction following abilities of the original Llama model which allows for more variation in prompts as described in "Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models" (https://arxiv.org/abs/2511.05171). But this comes at the cost of some performance on bioacoustic tasks.
 
@@ -114,6 +116,24 @@ pipeline = Pipeline(model=model)
 results = pipeline(audio_paths, queries, window_length_seconds=10.0, hop_length_seconds=10.0)
 print(results)
 # ['#0.00s - 10.00s#: Green Treefrog\n']
+```
+
+## Documentation
+
+The live documentation is at https://projects.earthspecies.org/naturelm-audio/latest/index.html.
+
+Serve the docs from your working tree, with live reload:
+
+```bash
+uv run mkdocs serve
+# Hosts docs at http://localhost:8000
+```
+
+Published versions are deployed with [mike](https://github.com/jimporter/mike) to the `gh-pages` branch. To preview the versioned site as deployed (with the version selector):
+
+```bash
+git fetch origin
+uv run mike serve -b origin/gh-pages
 ```
 
 ## Citation
