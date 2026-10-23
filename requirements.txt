@@ -13,8 +13,10 @@ async-timeout==5.0.1 ; python_full_version < '3.11'
 attrs==23.2.0
 audioop-lts==0.2.1 ; python_full_version >= '3.13'
 audioread==3.0.1
+babel==2.18.0
+backrefs==8.1
 beans-zero @ git+https://github.com/earthspecies/beans-zero.git@31d4487ee6452ae6c31853d45fd38b7d4150372d
-brotli==1.2.0
+brotli==1.2.1
 cachetools==5.5.0
 certifi==2026.7.22
 cffi==1.16.0
@@ -22,7 +24,7 @@ cfgv==3.4.0
 charset-normalizer==3.3.2
 click==8.5.0
 cloudpathlib==0.20.0
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+colorama==0.4.6
 contourpy==1.2.1
 cycler==0.12.1
 datasets==3.5.0
@@ -40,6 +42,7 @@ fonttools==4.65.0
 frozenlist==1.5.0
 fsspec==2024.5.0
 future==1.0.0
+ghp-import==2.1.0
 gitdb==4.0.11
 gitpython==3.1.62
 google-api-core==2.24.0
@@ -67,6 +70,7 @@ huggingface-hub==0.36.2
 identify==2.6.3
 idna==3.20
 iniconfig==2.0.0
+inversion==1.0.1
 jinja2==3.1.6
 joblib==1.4.2
 kiwisolver==1.4.5
@@ -81,7 +85,13 @@ markupsafe==2.1.5
 matplotlib==3.9.0
 mdurl==0.1.2
 memoization==0.4.0
+mergedeep==1.3.4
+mike==2.2.0
 mir-eval==0.7
+mkdocs==1.6.1
+mkdocs-get-deps==0.2.2
+mkdocs-material==9.7.7
+mkdocs-material-extensions==1.3.1
 mpmath==1.3.0
 msgpack==1.2.2
 multidict==6.1.0
@@ -108,9 +118,11 @@ nvidia-nvjitlink-cu12==12.6.85 ; platform_machine == 'x86_64' and platform_syste
 nvidia-nvtx-cu12==12.6.77 ; platform_machine == 'x86_64' and platform_system == 'Linux'
 orjson==3.12.0
 packaging==24.1
+paginate==0.5.7
 pandas==1.4.3
+pathspec==1.1.1
 peft==0.11.1
-pillow==12.3.0
+pillow==11.3.0
 platformdirs==4.2.2
 pluggy==1.5.0
 plumbum==1.7.2
@@ -129,6 +141,7 @@ pydantic-core==2.18.4
 pydantic-settings==2.7.1
 pydub==0.25.1
 pygments==2.21.0
+pymdown-extensions==12.3
 pyparsing==3.1.2
 pytest==9.1.1
 python-dateutil==2.9.0.post0
@@ -138,6 +151,7 @@ python-multipart==0.0.32
 pytz==2024.1
 pywin32==308 ; platform_python_implementation != 'PyPy' and platform_system == 'Windows'
 pyyaml==6.0
+pyyaml-env-tag==1.1
 rapidfuzz==3.9.4
 regex==2024.5.15
 requests==2.34.2
@@ -166,7 +180,7 @@ standard-aifc==3.13.0 ; python_full_version >= '3.13'
 standard-chunk==3.13.0 ; python_full_version >= '3.13'
 standard-sunau==3.13.0 ; python_full_version >= '3.13'
 starlette==1.7.0 ; python_full_version < '3.11'
-starlette==1.8.0 ; python_full_version >= '3.11'
+starlette==1.9.0 ; python_full_version >= '3.11'
 sympy==1.13.1
 tensorboard==2.18.0
 tensorboard-data-server==0.7.2
@@ -195,8 +209,10 @@ typing-extensions==4.16.0 ; python_full_version < '3.11' or (python_full_version
 typing-inspection==0.4.2
 urllib3==2.8.0
 uvicorn==0.53.0
+verspec==0.2.1
 virtualenv==21.7.14
 wandb==0.17.3
+watchdog==6.0.0
 werkzeug==3.1.8
 xxhash==3.5.0
 yarl==1.18.3
