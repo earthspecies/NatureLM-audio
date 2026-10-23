@@ -129,13 +129,6 @@ uv run mkdocs serve
 # Hosts docs at http://localhost:8000
 ```
 
-Published versions are deployed with [mike](https://github.com/jimporter/mike) to the `gh-pages` branch. To preview the versioned site as deployed (with the version selector):
-
-```bash
-git fetch origin
-uv run mike serve -b origin/gh-pages
-```
-
 ## Citation
 
 If you use NatureLM-audio or build upon it, please cite:
