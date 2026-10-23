@@ -61,16 +61,18 @@ def add_message(history, message):
     return history, _multimodal_textbox_factory()
 
 
-def combine_model_inputs(msgs: list[dict[str, str]]) -> dict[str, list[str]]:
+def combine_model_inputs(msgs: list[dict]) -> dict[str, list]:
     messages = []
     files = []
     for msg in msgs:
-        match msg:
-            case {"content": (path,)}:
-                messages.append({"role": msg["role"], "content": "<Audio><AudioHere></Audio> "})
-                files.append(path)
-            case _:
-                messages.append(msg)
+        # Gradio 6 normalizes message content to a list of typed blocks
+        for block in msg["content"]:
+            match block:
+                case {"type": "file", "file": {"path": path}}:
+                    messages.append({"role": msg["role"], "content": "<Audio><AudioHere></Audio> "})
+                    files.append(path)
+                case {"type": "text", "text": text}:
+                    messages.append({"role": msg["role"], "content": text})
     joined_messages = []
     # join consecutive messages from the same role
     for msg in messages:
@@ -95,11 +97,9 @@ def _chat_tab(examples):
     chatbot = gr.Chatbot(
         label="Model inputs",
         elem_id="chatbot",
-        bubble_full_width=False,
-        type="messages",
         render_markdown=False,
         # editable="user",  # disable because of https://github.com/gradio-app/gradio/issues/10320
-        resizeable=True,
+        resizable=True,
     )
     chat_input = _multimodal_textbox_factory()
     send_all = gr.Button("Send all", elem_id="send-all")
@@ -318,7 +318,7 @@ def main(
         ],
     }
 
-    with gr.Blocks(title="NatureLM-audio", theme=gr.themes.Default(primary_hue="slate")) as app:
+    with gr.Blocks(title="NatureLM-audio") as app:
         with gr.Tabs():
             with gr.Tab("Chat"):
                 _chat_tab(examples)
@@ -332,5 +332,6 @@ def main(
         server_name="localhost",  # "0.0.0.0",
         auth=None,
         show_error=show_errors,
+        theme=gr.themes.Default(primary_hue="slate"),
         favicon_path=str(assets_dir / "esp_favicon.png"),
     )

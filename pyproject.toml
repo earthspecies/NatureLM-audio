@@ -1,6 +1,6 @@
 [project]
 name = "NatureLM-audio"
-version = "1.0.2"
+version = "1.1.0"
 description = "NatureLM-audio: an Audio-Language Foundation Model for Bioacoustics"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,7 +13,7 @@ dependencies = [
   "datasets>=2.20.0",
   "cloudpathlib[gs]>=0.20.0",
   "einops>=0.8.0",
-  "gradio>=5.10.0",
+  "gradio>=6.16.0,<6.17",
   "google-cloud-aiplatform>=1.76.0",
   "Levenshtein>=0.25.1",
   "librosa>=0.11.0,<1.0",
