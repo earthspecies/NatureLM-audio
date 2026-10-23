@@ -1,0 +1,678 @@
+/* ── Fonts ───────────────────────────────────────────────────────────── */
+
+@font-face { font-family: 'JetBrains Mono'; src: url('../assets/fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../assets/fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../assets/fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../assets/fonts/JetBrainsMono-BoldItalic.woff2') format('woff2'); font-weight: 700; font-style: italic; }
+
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-Regular-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-Regular-WebS.woff') format('woff'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-RegularItalic-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-RegularItalic-WebS.woff') format('woff'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-Medium-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-Medium-WebS.woff') format('woff'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-MediumItalic-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-MediumItalic-WebS.woff') format('woff'); font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-Semibold-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-Semibold-WebS.woff') format('woff'); font-weight: 600; font-style: normal; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-SemiboldItalic-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-SemiboldItalic-WebS.woff') format('woff'); font-weight: 600; font-style: italic; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-Bold-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-Bold-WebS.woff') format('woff'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Euclid Circular B'; src: url('../assets/fonts/EuclidCircularB-BoldItalic-WebS.woff2') format('woff2'), url('../assets/fonts/EuclidCircularB-BoldItalic-WebS.woff') format('woff'); font-weight: 700; font-style: italic; }
+
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-Regular.otf') format('opentype'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-RegularItalic.otf') format('opentype'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-MediumItalic.otf') format('opentype'); font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-Semibold.otf') format('opentype'); font-weight: 600; font-style: normal; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-SemiboldItalic.otf') format('opentype'); font-weight: 600; font-style: italic; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Tiempos Text'; src: url('../assets/fonts/TiemposText-BoldItalic.otf') format('opentype'); font-weight: 700; font-style: italic; }
+
+/* ── ESP brand colors ────────────────────────────────────────────────── */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color:        #129C7B;
+  --md-primary-fg-color--light: #1ab893;
+  --md-primary-fg-color--dark:  #0d7a5f;
+  --md-primary-bg-color:        #ffffff;
+  --md-primary-bg-color--light: rgba(255,255,255,0.7);
+  --md-accent-fg-color:         #129C7B;
+  --md-typeset-a-color:         #129C7B;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #04D78A;
+  --md-primary-fg-color--light: #05f09c;
+  --md-primary-fg-color--dark:  #03b374;
+  --md-primary-bg-color:        #000000;
+  --md-primary-bg-color--light: rgba(0,0,0,0.54);
+  --md-accent-fg-color:         #04D78A;
+  --md-typeset-a-color:         #04D78A;
+}
+
+/* ── Typography ──────────────────────────────────────────────────────── */
+
+:root {
+  --md-text-font: 'Euclid Circular B', sans-serif;
+  --md-code-font: 'JetBrains Mono', monospace;
+}
+
+body, .md-typeset {
+  font-family: 'Euclid Circular B', sans-serif;
+}
+
+.md-typeset code, .md-typeset pre, kbd {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Heading sizes ───────────────────────────────────────────────────── */
+
+/* Match the alp-data docs: override h1 only and leave h2/h3/h4 at Material's
+   defaults (h2 25px/300, h3 20px/400), rather than the heavier weights and
+   hand-tuned margins carried over from the Sphinx/Furo build. */
+
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+
+/* ── Sidebar nav ─────────────────────────────────────────────────────── */
+
+.md-nav--primary > .md-nav__title {
+  display: none;
+}
+
+.md-sidebar--primary .md-nav__list {
+  padding-top: 0.6rem;
+}
+
+.md-nav__item--section > .md-nav__link {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgb(107, 111, 118) !important;
+  margin-top: 0.9rem;
+  margin-bottom: 0;
+}
+
+.md-nav--primary .md-nav__item:not(.md-nav__item--section) .md-nav__link {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
+.md-nav__item--section > .md-nav > .md-nav__list {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.md-nav--primary .md-nav__item:not(.md-nav__item--section) .md-nav__link--active {
+  font-weight: 600;
+}
+
+/* ── TOC ─────────────────────────────────────────────────────────────── */
+
+.md-nav--secondary,
+.md-nav--secondary .md-nav__link,
+.md-nav--secondary .md-nav {
+  font-size: 0.65rem;
+}
+
+.md-nav--secondary .md-nav__title {
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: 0.55rem;
+  font-weight: 400;
+  color: rgb(107, 111, 118) !important;
+  box-shadow: none;
+  background: none;
+  padding-left: 0.6rem;
+  padding-top: 0.6rem;
+}
+
+.md-nav--secondary .md-nav__title .md-nav__icon {
+  display: none;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+
+.md-header {
+  box-shadow: none;
+  padding: 0.4rem 0;
+  position: relative;
+  background: linear-gradient(to right, #129C7B, #A7ED99);
+}
+
+/* Hide the site-name text, which duplicates the logo — but keep the title
+   container itself visible, since Material nests mike's version selector
+   inside it. Hiding the whole container hides the version dropdown too. */
+.md-header__title .md-ellipsis {
+  display: none;
+}
+
+.md-header .md-logo {
+  padding: 0;
+  margin-right: auto;
+}
+
+.md-header .md-logo img {
+  height: 56px;
+  width: auto;
+}
+
+.md-header__source {
+  color: #000 !important;
+}
+
+.md-header__source svg {
+  fill: #000 !important;
+}
+
+/* ── Sidebars ────────────────────────────────────────────────────────── */
+
+.md-sidebar--primary,
+.md-sidebar--secondary {
+  top: 0 !important;
+  height: 100vh !important;
+}
+
+.md-content {
+  border-left: 1px solid var(--md-default-fg-color--lightest);
+  margin-top: 0 !important;
+}
+
+.md-main__inner {
+  margin-top: 0 !important;
+}
+
+/* ── Content spacing ─────────────────────────────────────────────────── */
+
+.md-content__inner {
+  padding-top: 1.4rem !important;
+  padding-left: 1rem !important;
+  padding-bottom: 3rem !important;
+}
+
+/* ── Lists ───────────────────────────────────────────────────────────── */
+
+.md-typeset ul li,
+.md-typeset ol li {
+  margin-bottom: 0.25rem;
+}
+
+/* ── Strip shadows ───────────────────────────────────────────────────── */
+
+.md-search__output,
+.md-search__scrollwrap,
+.md-tabs,
+.md-top,
+.md-dialog,
+.md-tooltip,
+.md-nav__link--active::before,
+[data-md-component="announce"],
+.admonition,
+details {
+  box-shadow: none !important;
+}
+
+/* ── Admonitions: subtle ─────────────────────────────────────────────── */
+
+details:not(.mkdocstrings-source),
+.admonition {
+  border: 1px solid var(--md-default-fg-color--lightest) !important;
+  border-left-width: 1px !important;
+}
+
+/* ── Back to top ─────────────────────────────────────────────────────── */
+
+.md-top {
+  top: 1rem !important;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.md-footer {
+  display: none;
+}
+
+/* ── Resource links (index page) ─────────────────────────────────────── */
+
+.resource-links {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 2.5rem;
+  font-family: 'Euclid Circular B', sans-serif;
+  font-size: 0.72rem;
+}
+
+.resource-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--md-typeset-a-color);
+  text-decoration: none !important;
+  transition: color 0.15s ease;
+}
+
+.resource-link:hover {
+  text-decoration: underline !important;
+  color: var(--md-primary-fg-color--dark);
+}
+
+.resource-link-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.resource-link-sep {
+  color: var(--md-default-fg-color--light);
+  user-select: none;
+}
+
+/* ── Update boxes ────────────────────────────────────────────────────── */
+
+.update-box {
+  background-color: #A7ED9926;
+  border-left: 3px solid #129C7B;
+  border-radius: 0 0.3rem 0.3rem 0;
+  padding: 0.65rem 1rem;
+  margin: 0.75rem 0 1.5rem;
+  font-size: 0.72rem;
+}
+
+.update-box .update-date {
+  font-family: 'Euclid Circular B', sans-serif;
+  font-weight: 500;
+  font-size: 0.64rem;
+  color: #129C7B;
+  letter-spacing: 0.03em;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* ── Prompt blocks ───────────────────────────────────────────────────── */
+
+.prompt-label {
+  font-size: 0.576rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #129C7B;
+  margin-top: 3.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.prompt-block {
+  position: relative;
+  font-family: 'Tiempos Text', serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  background-color: #A7ED9915;
+  border-left: 3px solid #129C7B;
+  border-radius: 0 0.3rem 0.3rem 0;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  margin: 1.1rem 0;
+  color: var(--md-default-fg-color);
+}
+
+.prompt-copy-btn {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  color: var(--md-default-fg-color--light);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+}
+
+.prompt-block:hover .prompt-copy-btn {
+  opacity: 1;
+}
+
+.prompt-copy-btn:hover {
+  color: var(--md-typeset-a-color);
+}
+
+.prompt-example {
+  margin: 1.5rem 0;
+}
+
+.prompt-example .prompt-label {
+  margin-top: 0;
+}
+
+.prompt-example .prompt-block {
+  margin-top: 0.4rem;
+  margin-bottom: 0;
+}
+
+.prompt-list li {
+  font-family: 'Tiempos Text', serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+/* ── Task overview table ─────────────────────────────────────────────── */
+
+.task-overview {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0 1.75rem;
+  font-size: 0.7rem;
+}
+
+.task-overview thead th {
+  font-size: 0.56rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+  padding: 0 1rem 0.5rem 0;
+  text-align: left;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.task-overview tbody td {
+  padding: 0.45rem 1rem 0.45rem 0;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.task-overview tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.task-overview td.overview-prompt {
+  font-family: 'Tiempos Text', serif;
+  font-style: italic;
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  font-size: 0.544rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-core {
+  background-color: #129C7B22;
+  color: #129C7B;
+}
+
+.badge-exp {
+  background-color: var(--md-code-bg-color);
+  color: var(--md-default-fg-color--light);
+}
+
+/* ── Tips cards ──────────────────────────────────────────────────────── */
+
+.tips-card {
+  background-color: var(--md-code-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.6rem;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0 2.5rem;
+}
+
+.tips-card.tips-card--green {
+  background-color: #A7ED9915;
+  border-color: #129C7B33;
+}
+
+.tips-card.tips-card--green .tips-card-heading {
+  color: #129C7B;
+}
+
+.tips-card.tips-card--green li {
+  font-size: 0.72rem;
+}
+
+.tips-card .tips-card-heading {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+}
+
+.tips-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.tips-card li {
+  font-size: 0.656rem;
+  line-height: 1.6;
+  margin-bottom: 0.3rem;
+}
+
+.tips-card li:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Prompt reference table ──────────────────────────────────────────── */
+
+.prompt-ref {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 1.75rem;
+}
+
+.prompt-ref tr {
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.prompt-ref tr:last-child {
+  border-bottom: none;
+}
+
+.prompt-ref td {
+  padding: 0.55rem 0.9rem;
+  vertical-align: top;
+}
+
+.prompt-ref td.pref-cat {
+  width: 22%;
+  padding-top: 1.1rem;
+  font-size: 0.576rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+  white-space: nowrap;
+}
+
+.prompt-ref td.pref-prompts {
+  font-family: 'Tiempos Text', serif;
+  font-style: italic;
+  font-size: 0.76rem;
+  line-height: 1.7;
+}
+
+.prompt-ref td.pref-prompts ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.prompt-ref td.pref-prompts li {
+  margin-bottom: 0.1rem;
+}
+
+/* ── Dialog cards ────────────────────────────────────────────────────── */
+
+.dialog-card {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.4rem;
+  margin: 0.75rem 0 1.25rem;
+  overflow: hidden;
+  padding: 0.25rem 0;
+}
+
+.dialog-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.3rem 0.9rem;
+  align-items: baseline;
+  line-height: 1.5;
+}
+
+.dialog-row + .dialog-row {
+  padding-top: 0.25rem;
+}
+
+.dialog-role {
+  flex-shrink: 0;
+  width: 3.5rem;
+  font-size: 0.544rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+  padding-top: 0.15rem;
+}
+
+.dialog-role--user { color: #129C7B; }
+
+.dialog-role::after {
+  content: ':';
+}
+
+.dialog-text {
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color);
+}
+
+.dialog-text--prompt {
+  font-family: 'Tiempos Text', serif;
+  font-style: italic;
+}
+
+.dialog-text--muted {
+  color: var(--md-default-fg-color--light);
+  font-style: italic;
+}
+
+/* ── Ext button / arrow link ─────────────────────────────────────────── */
+
+.ext-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: 'Euclid Circular B', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #1a1a1a !important;
+  background: #C3E409;
+  text-decoration: none !important;
+  padding: 0.5em 1.25em;
+  border-radius: 999px;
+  margin: 0.5rem 0 1.5rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ext-btn:hover {
+  background: linear-gradient(90deg, #129c7b 0%, #04d78a 50%, #c3e409 100%);
+  color: #1a1a1a !important;
+}
+
+.arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--md-typeset-a-color);
+  text-decoration: none !important;
+  font-family: 'Euclid Circular B', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  transition: gap 0.15s ease;
+}
+
+.arrow-link:hover {
+  gap: 0.5rem;
+  text-decoration: none !important;
+}
+
+.arrow-link svg {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.arrow-link:hover svg {
+  transform: translateX(2px);
+}
+
+/* ── Anchor highlight ────────────────────────────────────────────────── */
+
+:target {
+  background-color: transparent !important;
+}
+
+:target > h1,
+:target > h2,
+:target > h3,
+:target > h4 {
+  background-color: #A7ED9933 !important;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+}
+
+[data-md-color-scheme="slate"] :target > h1,
+[data-md-color-scheme="slate"] :target > h2,
+[data-md-color-scheme="slate"] :target > h3,
+[data-md-color-scheme="slate"] :target > h4 {
+  background-color: #2e2e2e !important;
+}
+
+/* ── Dark mode icon inversion ────────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] .github-icon,
+[data-md-color-scheme="slate"] .paper-icon {
+  filter: invert(1) !important;
+}
+
+/* ── Page version note ───────────────────────────────────────────────── */
+
+.page-version {
+  margin: 0.4rem 0 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.page-version-note {
+  font-size: 0.656rem;
+  color: var(--md-default-fg-color--light);
+  margin: 0;
+}
+
+.mini-player.mp-error {
+  opacity: 0.45;
+}
+
+.mini-player.mp-error .mp-time {
+  font-style: italic;
+}
+
+/* ── Markdown tables ─────────────────────────────────────────────────── */
+
+/* Material ships plain markdown tables at 0.64rem (12.8px) against 16px body
+   text, and the alp-data docs keep that default. We deliberately diverge here:
+   at 12.8px these tables read as shrunken next to the surrounding prose. */
+.md-typeset table:not([class]) {
+  font-size: 0.8rem;
+}

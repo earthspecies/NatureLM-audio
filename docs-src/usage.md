@@ -1,0 +1,128 @@
+# Usage
+
+<div class="page-version">
+  <p class="page-version-note">This guide applies to NatureLM-audio v1.0, open sourced <a href="https://huggingface.co/EarthSpeciesProject/NatureLM-audio" target="_blank">here</a> on Hugging Face.</p>
+</div>
+
+## Requirements
+
+- Python 3.10+
+- `uv` (recommended, but optional)
+- Access to [Meta Llama 3.1 8B Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
+
+Make sure you're authenticated to HuggingFace and that you have been granted access to Llama-3.1 on HuggingFace before proceeding.
+
+You can request access from: [https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct)
+
+## Installation
+
+### Using uv (recommended)
+
+Clone the repository and install the dependencies:
+
+```bash
+git clone https://github.com/earthspecies/NatureLM-audio.git
+cd NatureLM-audio
+uv sync
+# If there's no gpu available or you are on MacOS then do
+uv sync --no-group gpu
+```
+
+Project entrypoints are then available with `uv run naturelm`.
+
+### Without uv
+
+If you're not using uv, you can install the package with pip:
+
+For CPU-only or macOS (without GPU acceleration):
+
+```bash
+pip install -e .
+```
+
+For Linux with CUDA support:
+
+```bash
+pip install -e .[gpu]
+```
+
+## Run inference on a set of audio files in a folder
+
+```bash
+uv run naturelm infer --cfg-path configs/inference.yml --audio-path assets --query "Caption the audio" --window-length-seconds 10.0 --hop-length-seconds 10.0
+```
+
+This will run inference on all audio files in the `assets` folder, using a window length of 10 seconds and a hop length of 10 seconds. The results will be saved in `inference_output.jsonl`. Run `python infer.py --help` for a description of the arguments.
+
+## Run evaluation on BEANS-Zero
+
+BEANS-Zero is a zero-shot audio+text benchmark for bioacoustics. The repository for the benchmark can be found [here](https://github.com/earthspecies/beans-zero), and the dataset is hosted on HuggingFace [here](https://huggingface.co/datasets/EarthSpeciesProject/BEANS-Zero).
+
+> **Note:** One of the tasks in BEANS-Zero requires a Java 8 runtime environment. If you don't have it installed, that task will be skipped.
+
+To run evaluation on the BEANS-Zero dataset, you can use the following command:
+
+```bash
+uv run beans --cfg-path configs/inference.yml --data-path "/some/local/path/to/data" --output-path "beans_zero_eval.jsonl"
+```
+
+> **Caution:** The BEANS-Zero dataset is large (~180GB) and will take a long time to run. The predictions will be saved in `beans_zero_eval.jsonl` and the evaluation metrics will be saved in `beans_zero_eval_metrics.jsonl`. Run `python beans_zero_inference.py --help` for a description of the arguments.
+
+## Running the inference web app
+
+You can launch the inference app with:
+
+```bash
+uv run naturelm inference-app --cfg-path configs/inference.yml --merging-alpha 0.5
+```
+
+This launches a local web app where you can upload an audio file and prompt the NatureLM-audio model.
+
+## Instantiating the model from checkpoint
+
+You can load the model directly from the HuggingFace Hub:
+
+```python
+from NatureLM.models import NatureLM
+# Download the model from HuggingFace
+model = NatureLM.from_pretrained("EarthSpeciesProject/NatureLM-audio")
+model = model.eval().to("cuda")
+```
+
+Use it within your code for inference with the Pipeline API:
+
+```python
+from NatureLM.infer import Pipeline
+
+# pass your audios in as file paths or as numpy arrays
+# NOTE: the Pipeline class will automatically load the audio and convert them to numpy arrays
+audio_paths = ["assets/nri-GreenTreeFrogEvergladesNP.mp3"]  # wav, mp3, ogg, flac are supported.
+
+# Create a list of queries. You may also pass a single query as a string for multiple audios.
+# The same query will be used for all audios.
+queries = ["What is the common name for the focal species in the audio? Answer:"]
+
+pipeline = Pipeline(model=model)
+# NOTE: you can also just do pipeline = Pipeline() which will download the model automatically
+
+# Run the model over the audio in sliding windows of 10 seconds with a hop length of 10 seconds
+results = pipeline(audio_paths, queries, window_length_seconds=10.0, hop_length_seconds=10.0)
+print(results)
+# ['#0.00s - 10.00s#: Green Treefrog\n']
+```
+
+## Model Merging
+
+<div class="update-box">
+  <span class="update-date">2025-05-27</span>
+  We've updated the NatureLM-audio Llama model by allowing for a flexible merge operation between the original Llama 3.1 8B and the LoRA fine-tuned one from the NatureLM-audio paper. Merging with the original weights better retains the chat and instruction following abilities of the original Llama model which allows for more variation in prompts as described in <a href="https://arxiv.org/abs/2511.05171" target="_blank">Model Merging Improves Zero-Shot Generalization in Bioacoustic Foundation Models</a>. But this comes at the cost of some performance on bioacoustic tasks.
+</div>
+
+To use the new merging functionality, you can specify a `merging_alpha` parameter when loading the model from the config file:
+
+```yaml
+generate:
+  merging_alpha: 0.4  # Interpolate 60% toward base model (40% NatureLM-audio fine-tuned llama weights)
+```
+
+A good range to try is between 0.4 and 0.6, but the exact value is dataset and task dependent. Read the [paper](https://arxiv.org/abs/2511.05171) for more details and guidance!
